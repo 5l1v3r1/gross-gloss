@@ -1,2 +1,4 @@
-# gross-gloss
-64k Intro by Team210 at Solskogen 2k19
+# Fuer Elite
+64k Intro by Team210 at Underground Conference 9
+
+Demo is subject to GPLv3 - See LICENSE.
