@@ -202,13 +202,23 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 		*fsaa4 = "4*FSAA",
 		*fsaa9 = "9*FSAA",
 		*fsaa16 = "16*FSAA",
-		*fsaa25 = "25*FSAA";
+		*fsaa25 = "25*FSAA",
+        *fsaa36 = "36*FSAA",
+        *fsaa49 = "49*FSAA",
+        *fsaa64 = "64*FSAA",
+        *fsaa81 = "81*FSAA",
+        *fsaa100 = "100*FSAA";
 	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa1));
 	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa4));
 	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa9));
 	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa16));
 	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa25));
-	SendMessage(hFSAAComboBox, CB_SETCURSEL, 4, 0);
+    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa36));
+    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa49));
+    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa64));
+    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa81));
+    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa100));
+	SendMessage(hFSAAComboBox, CB_SETCURSEL, 9, 0);
 
 	// Add "SFX Buffer: " text
 	HWND hTXAAText = CreateWindow(WC_STATIC, "SFX Buffer: ", WS_VISIBLE | WS_CHILD | SS_LEFT, 10,95,100,100, lwnd, NULL, hInstance, NULL);

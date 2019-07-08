@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#define DEBUG
 
 const char *demoname = "Gross Gloss/Team210";
 unsigned int muted = 0.;
@@ -360,30 +361,30 @@ void draw()
     {
         if(override_index == 1)
         {
-            glUseProgram(z10out_program);
-            glUniform1f(z10out_iTime_location, t);
-            glUniform2f(z10out_iResolution_location, w, h);
+            glUseProgram(voronoidesign_program);
+            glUniform1f(voronoidesign_iTime_location, t);
+            glUniform2f(voronoidesign_iResolution_location, w, h);
         }
         else if(override_index == 2)
         {
-            glUseProgram(z10in_program);
-            glUniform1f(z10in_iTime_location, t);
-            glUniform2f(z10in_iResolution_location, w, h);
+            glUseProgram(groundboxes_program);
+            glUniform1f(groundboxes_iTime_location, t);
+            glUniform2f(groundboxes_iResolution_location, w, h);
         }
     }
     else
     {
         if(t < 57.)
         {
-            glUseProgram(z10out_program);
-            glUniform1f(z10out_iTime_location, t);
-            glUniform2f(z10out_iResolution_location, w, h);
+            glUseProgram(voronoidesign_program);
+            glUniform1f(voronoidesign_iTime_location, t);
+            glUniform2f(voronoidesign_iResolution_location, w, h);
         }
         else if(t < 9000.)
         {
-            glUseProgram(z10in_program);
-            glUniform1f(z10in_iTime_location, t);
-            glUniform2f(z10in_iResolution_location, w, h);
+            glUseProgram(groundboxes_program);
+            glUniform1f(groundboxes_iTime_location, t);
+            glUniform2f(groundboxes_iResolution_location, w, h);
         }
 
         else ExitProcess(0);

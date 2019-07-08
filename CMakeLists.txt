@@ -48,7 +48,7 @@ add_custom_target(texture_packing
 
 add_custom_target(symbolization
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/gfx/
-    COMMAND "${Python3_EXECUTABLE}" symbolize.py z10out.frag z10in.frag -o symbols.h
+    COMMAND "${Python3_EXECUTABLE}" symbolize.py voronoidesign.frag groundboxes.frag -o symbols.h
 )
 
 if(MSVC)

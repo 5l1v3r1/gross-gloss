@@ -1,8 +1,7 @@
 const vec3 c = vec3(1.0, 0.0, -1.0);
 void scene(in vec3 x, out vec2 s);
-void normal(in vec3 x, out vec3 n)
+void normal(in vec3 x, out vec3 n, in float dx)
 {
-    const float dx = 5.e-4;
     vec2 s, na;
     
     scene(x,s);
