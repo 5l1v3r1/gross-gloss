@@ -219,7 +219,9 @@ float protokick(float t, float f_start, float f_end, float fdecay, float hold, f
 float strichr10_volume(float _BEAT)
 {
     if(_BEAT<0){return 0.;}
-    else if(_BEAT>=8 && _BEAT<20){return (0.+((1.-0.)/(12.-0.)*((_BEAT-8.)-0.)));}
+    else if(_BEAT>=8 && _BEAT<24){return (0.+((1.-0.)/(16.-0.)*((_BEAT-8.)-0.)));}
+    else if(_BEAT>=64 && _BEAT<72){return (.05+((.4-.05)/(8.-0.)*((_BEAT-64.)-0.)));}
+    else if(_BEAT>=72 && _BEAT<73){return (0.+((0.-0.)/(1.-0.)*((_BEAT-72.)-0.)));}
     else{return 1.;}
 }
 float FQMimp4_volume(float _BEAT)
@@ -263,7 +265,7 @@ float rfloat(int off)
 }
 
 #define NTRK 8
-#define NMOD 24
+#define NMOD 27
 #define NPTN 8
 #define NNOT 845
 #define NDRM 35
@@ -288,7 +290,7 @@ float drum_rel(int index)   {return     rfloat(index+2+5*NTRK+4*NMOD+NPTN+6*NNOT
 
 vec2 mainSynth(float time)
 {
-    float max_mod_off = 64.;
+    float max_mod_off = 73.;
     int drum_index = 82;
     
     float sL = 0.;
