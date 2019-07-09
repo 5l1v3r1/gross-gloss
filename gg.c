@@ -374,17 +374,23 @@ void draw()
     }
     else
     {
-        if(t < 57.)
+        if(t < 10.)
         {
             glUseProgram(voronoidesign_program);
             glUniform1f(voronoidesign_iTime_location, t);
             glUniform2f(voronoidesign_iResolution_location, w, h);
         }
-        else if(t < 9000.)
+        else if(t < 20.)
         {
             glUseProgram(groundboxes_program);
-            glUniform1f(groundboxes_iTime_location, t);
+            glUniform1f(groundboxes_iTime_location, t-10.);
             glUniform2f(groundboxes_iResolution_location, w, h);
+        }
+        else if(t < 9000.)
+        {
+            glUseProgram(graffiti_program);
+            glUniform1f(graffiti_iTime_location, t-20.);
+            glUniform2f(graffiti_iResolution_location, w, h);
         }
 
         else ExitProcess(0);

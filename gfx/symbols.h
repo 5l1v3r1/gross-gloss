@@ -2,8 +2,8 @@
 #ifndef SYMBOLIZE_H
 #define SYMBOLIZE_H
 
-int rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle;
-const int nsymbols = 11;
+int rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle;
+const int nsymbols = 14;
 const char *rand_source = "#version 130\n\n"
 "void rand(in vec2 x, out float n)\n"
 "{\n"
@@ -143,6 +143,61 @@ const char *zextrude_source = "// Extrusion\n"
 "{\n"
 "    vec2 w = vec2(-d2d, abs(z)-0.5*h);\n"
 "    d = length(max(w,0.0));\n"
+"}\n"
+"\0";
+const char *dlinesegment_source = "#version 130\n\n"
+"void dlinesegment(in vec2 x, in vec2 p1, in vec2 p2, out float d)\n"
+"{\n"
+"    vec2 da = p2-p1;\n"
+"    d = length(x-mix(p1, p2, clamp(dot(x-p1, da)/dot(da,da),0.,1.)));\n"
+"}\n"
+"\0";
+const char *dspline2_source = "#version 130\n\n"
+"const vec3 c = vec3(1.,0.,-1.);\n"
+"const float pi = acos(-1.);\n"
+"\n"
+"//distance to spline with parameter t\n"
+"float dist2(vec2 p0,vec2 p1,vec2 p2,vec2 x,float t)\n"
+"{\n"
+"    t = clamp(t, 0., 1.);\n"
+"    return length(x-pow(1.-t,2.)*p0-2.*(1.-t)*t*p1-t*t*p2);\n"
+"}\n"
+"\n"
+"//minimum dist3ance to spline\n"
+"void dspline2(in vec2 x, in vec2 p0, in vec2 p1, in vec2 p2, out float ds)\n"
+"{\n"
+"    //coefficients for 0 = t^3 + a * t^2 + b * t + c\n"
+"    vec2 E = x-p0, F = p2-2.*p1+p0, G = p1-p0;\n"
+"    vec3 ai = vec3(3.*dot(G,F), 2.*dot(G,G)-dot(E,F), -dot(E,G))/dot(F,F);\n"
+"\n"
+"	//discriminant and helpers\n"
+"    float tau = ai.x/3., p = ai.y-tau*ai.x, q = - tau*(tau*tau+p)+ai.z, dis = q*q/4.+p*p*p/27.;\n"
+"    \n"
+"    //triple real root\n"
+"    if(dis > 0.) \n"
+"    {\n"
+"        vec2 ki = -.5*q*c.xx+sqrt(dis)*c.xz, ui = sign(ki)*pow(abs(ki), c.xx/3.);\n"
+"        ds = dist2(p0,p1,p2,x,ui.x+ui.y-tau);\n"
+"        return;\n"
+"    }\n"
+"    \n"
+"    //three dist3inct real roots\n"
+"    float fac = sqrt(-4./3.*p), arg = acos(-.5*q*sqrt(-27./p/p/p))/3.;\n"
+"    vec3 t = c.zxz*fac*cos(arg*c.xxx+c*pi/3.)-tau;\n"
+"    ds = min(\n"
+"        dist2(p0,p1,p2,x, t.x),\n"
+"        min(\n"
+"            dist2(p0,p1,p2,x,t.y),\n"
+"            dist2(p0,p1,p2,x,t.z)\n"
+"        )\n"
+"    );\n"
+"}\n"
+"\0";
+const char *smoothmin_source = "// iq's smooth minimum\n"
+"void smoothmin(in float a, in float b, in float k, out float dst)\n"
+"{\n"
+"    float h = max( k-abs(a-b), 0.0 )/k;\n"
+"    dst = min( a, b ) - h*h*h*k*(1.0/6.0);\n"
 "}\n"
 "\0";
 const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
@@ -562,6 +617,237 @@ const char *groundboxes_source = "/* Gross Gloss by Team210 - 64k intro by Team2
 "    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
 "}\n"
 "\0";
+const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
+"* Copyright (C) 2019  Alexander Kraus <nr4@z10.info>\n"
+"*\n"
+"* This program is free software: you can redistribute it and/or modify\n"
+"* it under the terms of the GNU General Public License as published by\n"
+"* the Free Software Foundation, either version 3 of the License, or\n"
+"* (at your option) any later version.\n"
+"*\n"
+"* This program is distributed in the hope that it will be useful,\n"
+"* but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"* GNU General Public License for more details.\n"
+"*\n"
+"* You should have received a copy of the GNU General Public License\n"
+"* along with this program.  If not, see <https://www.gnu.org/licenses/>.\n"
+"*/\n"
+"\n"
+"#version 130\n\n"
+"\n"
+"uniform float iTime;\n"
+"uniform vec2 iResolution;\n"
+"\n"
+"// Global constants\n"
+"const float pi = acos(-1.);\n"
+"const vec3 c = vec3(1.0, 0.0, -1.0);\n"
+"float a = 1.0;\n"
+"\n"
+"float iScale;\n"
+"\n"
+"void rand(in vec2 x, out float n);\n"
+"void lfnoise(in vec2 t, out float n);\n"
+"void dlinesegment(in vec2 x, in vec2 p1, in vec2 p2, out float d);\n"
+"float dist2(vec2 p0,vec2 p1,vec2 p2,vec2 x,float t);\n"
+"void dspline2(in vec2 x, in vec2 p0, in vec2 p1, in vec2 p2, out float ds);\n"
+"void stroke(in float d0, in float s, out float d);\n"
+"void zextrude(in float z, in float d2d, in float h, out float d);\n"
+"float sm(float d)\n"
+"{\n"
+"    return smoothstep(1.5/iResolution.y, -1.5/iResolution.y, d);\n"
+"}\n"
+"void smoothmin(in float a, in float b, in float k, out float dst);\n"
+"float ind;\n"
+"void graf(in vec2 x, in vec2 size, in float w, out float dst)\n"
+"{\n"
+"    x.x += .3*iTime;\n"
+"    x.y -= .1;\n"
+"    \n"
+"    vec2 y = vec2(mod(x.x, size.x)-.5*size.x, x.y);\n"
+"    ind = (y.x-x.x)/size.x;\n"
+"    vec3 r,\n"
+"        d;\n"
+"    \n"
+"    size.x -= 2.*w; \n"
+"    \n"
+"    rand(vec2(ind,0.), r.x);\n"
+"    rand(vec2(ind,1337.), r.y);\n"
+"    rand(vec2(ind,2337.), r.z);\n"
+"    \n"
+"    vec2 pc = vec2(.5*size.x*(-1.+2.*r.y), 0.);\n"
+"    \n"
+"    // x component of r selects first actor\n"
+"    if(r.x < .5) // Lin\n"
+"    {\n"
+"        vec2 p1 = vec2(.5*size.x*(-1.+4.*r.x),-.5*size.y),\n"
+"            p2 = pc;\n"
+"        dlinesegment(y, p1, p2, dst);\n"
+"    }\n"
+"    else // Quad\n"
+"    {\n"
+"        vec2 p1 = vec2(.5*size.x*(-1.+4.*(r.x-.5)),-.5*size.y),\n"
+"            p2 = vec2(.5*size.x*(-1.+2.*r.y), -.5*size.y),\n"
+"            p3 = pc;\n"
+"        dspline2(y, p1, p2, p3, dst);\n"
+"    }\n"
+"    \n"
+"    // y component of r selects connection type\n"
+"    \n"
+"    // z component of r selects second actor\n"
+"    if(r.z < .5) // Lin\n"
+"    {\n"
+"        vec2 p1 = vec2(.5*size.x*(-1.+4.*r.z),.5*size.y),\n"
+"            p2 = pc;\n"
+"        dlinesegment(y, p1, p2, d.x);\n"
+"    }\n"
+"    else // Quad\n"
+"    {\n"
+"        vec2 p1 = vec2(.5*size.x*(-1.+4.*(r.z-.5)),.5*size.y),\n"
+"            p2 = vec2(.5*size.x*(-1.+2.*r.y), .5*size.y),\n"
+"            p3 = pc;\n"
+"        dspline2(y, p1, p2, p3, d.x);\n"
+"    }\n"
+"    \n"
+"    dst = min(dst, d.x);\n"
+"    \n"
+"    // Generate displacement\n"
+"    lfnoise(12.*x, d.y);\n"
+"    lfnoise(22.*x, d.z);\n"
+"    d.y += .3*d.z;\n"
+"    d.y = floor(.2+d.y);\n"
+"    \n"
+"    stroke(dst, w+.08*d.y, dst);\n"
+"}\n"
+"\n"
+"void add(in vec2 sda, in vec2 sdb, out vec2 sdf);\n"
+"void scene(in vec3 x, out vec2 sdf)\n"
+"{\n"
+"    float n;\n"
+"    lfnoise(5.*x.xy+iTime*c.xy, n);\n"
+"    x.z += .03*n;\n"
+"    \n"
+"    float d = 1., da;\n"
+"    for(float i=0.; i<2.; i+=1.)\n"
+"    {\n"
+"    	graf(x.xy-1337.333*i*c.xy, vec2(.4,.6), .05, da);\n"
+"        //d = min(d, da);\n"
+"        float rr;\n"
+"        rand(i*c.xx*1.e2,rr); \n"
+"        zextrude(x.z, -d+.5*abs(x.z), .07+.06*rr, d);\n"
+"   		 stroke(d,.02, d);\n"
+"        smoothmin(d, da, .2, d);\n"
+"    }\n"
+"    \n"
+"    sdf = vec2(d, 2.);\n"
+"    \n"
+"    add(sdf, vec2(x.z+.05,1.), sdf);\n"
+"}   \n"
+"\n"
+"void normal(in vec3 x, out vec3 n, in float dx);\n"
+"void colorize(in vec2 x, out vec3 col)\n"
+"{\n"
+"    x.x += .3*iTime;\n"
+"    x.y -= .05;\n"
+"    \n"
+"    col = .5*c.xxx;\n"
+"    \n"
+"    float s = .1;\n"
+"    vec2 dd = mod(x, s)-.5*s;\n"
+"    stroke(dd.x, .005, dd.x);\n"
+"    stroke(dd.y, .005, dd.y);\n"
+"    col = mix(col, c.xxx, sm(min(dd.x, dd.y)));\n"
+"    \n"
+"    float d = 1., da;\n"
+"    for(float i=0.; i<2.; i+=1.)\n"
+"    {\n"
+"    	graf(x.xy-1337.333*i*c.xy-.3*iTime*c.xy, vec2(.4,.6), .05, da);\n"
+"        //d = min(d, da);\n"
+"        float rr;\n"
+"        rand(i*c.xx*1.e2,rr); \n"
+"   		 stroke(d,.18, d);\n"
+"        smoothmin(d, da, .2, d);\n"
+"    }\n"
+"    col = mix(col, vec3(.78,.61*abs(2.*x.y),.15), sm(d));\n"
+"    \n"
+"    stroke(d-.03, .03, d);\n"
+"    col = mix(col, c.yyy, sm(d));\n"
+"}\n"
+"\n"
+"void mainImage( out vec4 fragColor, in vec2 fragCoord )\n"
+"{\n"
+"    a = iResolution.x/iResolution.y;\n"
+"    \n"
+"    iScale = fract(iTime);\n"
+"    \n"
+"    vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), \n"
+"        s;\n"
+"    vec3 col = c.yyy, \n"
+"        o = c.yzx,\n"
+"        r = c.xyy, \n"
+"        u = normalize(c.yxx),\n"
+"        t = c.yyy, \n"
+"        dir,\n"
+"        n,\n"
+"        x;\n"
+"    int N = 100,\n"
+"        i;\n"
+"    t = uv.x * r + uv.y * u;\n"
+"    dir = normalize(t-o);\n"
+"\n"
+"    float d = -(o.z-.08)/dir.z;\n"
+"    \n"
+"    for(i = 0; i<N; ++i)\n"
+"    {\n"
+"     	x = o + d * dir;\n"
+"        scene(x,s);\n"
+"        if(s.x < 1.e-4)break;\n"
+"        if(x.z<-.1)\n"
+"        {\n"
+"            col = .2*c.xxx;\n"
+"            i = N;\n"
+"            break;\n"
+"        }\n"
+"        d += min(s.x,5.e-3);\n"
+"        //d += s.x;\n"
+"    }\n"
+"    \n"
+"    if(i < N)\n"
+"    {\n"
+"        normal(x,n, 5.e-3);\n"
+"        \n"
+"        if(s.y == 1.)\n"
+"        {\n"
+"            vec3 l = normalize(x+.5*c.yzx);\n"
+"            colorize(x.xy, col);\n"
+"            col = .1*col\n"
+"                + 1.*col * abs(dot(l,n))\n"
+"                + 1.5 * col * abs(pow(dot(reflect(x-l,n),dir),2.));\n"
+"        }\n"
+"        else if(s.y == 2.)\n"
+"        {\n"
+"            vec3 l = normalize(x+c.xzx);\n"
+"            float r;\n"
+"            lfnoise(x.xy, r);\n"
+"            col = mix(vec3(0.99,0.43,0.15),vec3(0.44,0.07,0.66),sin(2.*iScale*r*x));\n"
+"            col = .1*col\n"
+"                + .8*col * abs(dot(l,n))\n"
+"                + 6.5*col * abs(pow(dot(reflect(x-l,n),dir),3.));\n"
+"        }\n"
+"    }\n"
+"    \n"
+"    //col += col;\n"
+"    \n"
+"    col *= col;\n"
+"    col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));\n"
+"    fragColor = vec4(clamp(col,0.,1.),1.0);\n"
+"}\n"
+"\n"
+"void main()\n"
+"{\n"
+"    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
+"}\n"
+"\0";
 void Loadrand()
 {
     int rand_size = strlen(rand_source);
@@ -705,6 +991,45 @@ void Loadzextrude()
 #endif
     progress += .2/(float)nsymbols;
 }
+void Loaddlinesegment()
+{
+    int dlinesegment_size = strlen(dlinesegment_source);
+    dlinesegment_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(dlinesegment_handle, 1, (GLchar **)&dlinesegment_source, &dlinesegment_size);
+    glCompileShader(dlinesegment_handle);
+#ifdef DEBUG
+    printf("---> dlinesegment Shader:\n");
+    debug(dlinesegment_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
+void Loaddspline2()
+{
+    int dspline2_size = strlen(dspline2_source);
+    dspline2_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(dspline2_handle, 1, (GLchar **)&dspline2_source, &dspline2_size);
+    glCompileShader(dspline2_handle);
+#ifdef DEBUG
+    printf("---> dspline2 Shader:\n");
+    debug(dspline2_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
+void Loadsmoothmin()
+{
+    int smoothmin_size = strlen(smoothmin_source);
+    smoothmin_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(smoothmin_handle, 1, (GLchar **)&smoothmin_source, &smoothmin_size);
+    glCompileShader(smoothmin_handle);
+#ifdef DEBUG
+    printf("---> smoothmin Shader:\n");
+    debug(smoothmin_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
 
 void LoadSymbols()
 {
@@ -730,13 +1055,21 @@ void LoadSymbols()
     updateBar();
     Loadzextrude();
     updateBar();
+    Loaddlinesegment();
+    updateBar();
+    Loaddspline2();
+    updateBar();
+    Loadsmoothmin();
+    updateBar();
 }
-int voronoidesign_program, voronoidesign_handle, groundboxes_program, groundboxes_handle;
+int voronoidesign_program, voronoidesign_handle, groundboxes_program, groundboxes_handle, graffiti_program, graffiti_handle;
 int voronoidesign_iTime_location;
 voronoidesign_iResolution_location;
 int groundboxes_iTime_location;
 groundboxes_iResolution_location;
-const int nprograms = 2;
+int graffiti_iTime_location;
+graffiti_iResolution_location;
+const int nprograms = 3;
 
 void Loadvoronoidesign()
 {
@@ -804,11 +1137,47 @@ void Loadgroundboxes()
     progress += .2/(float)nprograms;
 }
 
+void Loadgraffiti()
+{
+    int graffiti_size = strlen(graffiti_source);
+    graffiti_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(graffiti_handle, 1, (GLchar **)&graffiti_source, &graffiti_size);
+    glCompileShader(graffiti_handle);
+#ifdef DEBUG
+    printf("---> graffiti Shader:\n");
+    debug(graffiti_handle);
+    printf(">>>>\n");
+#endif
+    graffiti_program = glCreateProgram();
+    glAttachShader(graffiti_program,graffiti_handle);
+    glAttachShader(graffiti_program,rand_handle);
+    glAttachShader(graffiti_program,lfnoise_handle);
+    glAttachShader(graffiti_program,dlinesegment_handle);
+    glAttachShader(graffiti_program,dspline2_handle);
+    glAttachShader(graffiti_program,stroke_handle);
+    glAttachShader(graffiti_program,zextrude_handle);
+    glAttachShader(graffiti_program,smoothmin_handle);
+    glAttachShader(graffiti_program,add_handle);
+    glAttachShader(graffiti_program,normal_handle);
+    glLinkProgram(graffiti_program);
+#ifdef DEBUG
+    printf("---> graffiti Program:\n");
+    debugp(graffiti_program);
+    printf(">>>>\n");
+#endif
+    glUseProgram(graffiti_program);
+    graffiti_iTime_location = glGetUniformLocation(graffiti_program, "iTime");
+    graffiti_iResolution_location = glGetUniformLocation(graffiti_program, "iResolution");
+    progress += .2/(float)nprograms;
+}
+
 void LoadPrograms()
 {
     Loadvoronoidesign();
     updateBar();
     Loadgroundboxes();
+    updateBar();
+    Loadgraffiti();
     updateBar();
 }
 #endif
