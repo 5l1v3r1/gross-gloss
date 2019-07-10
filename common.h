@@ -189,7 +189,7 @@ double t_paused;
 
 GLuint first_pass_framebuffer = 0, first_pass_texture;
 GLenum error;
-#define NSHADERS 3.
+#define NSHADERS 5.
 
 float t_load_end = 0.;
 

@@ -204,12 +204,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             else if(r > .7)
                 col = mix(c.xxy, c.xyy, .5);
             
-            vec3 hsv;
-            rgb2hsv(col, hsv);
-            float na;
-            lfnoise(x.xy-si*iTime+4.*hsv.x, na);
-            hsv.x = mod(1.*hsv.x+.2*na+si*iTime, 2.*pi);
-            hsv2rgb(hsv, col);
+//             vec3 hsv;
+//             rgb2hsv(col, hsv);
+//             float na;
+//             lfnoise(x.xy-si*iTime+4.*hsv.x, na);
+//             hsv.x = mod(1.*hsv.x+.2*na+si*iTime, 2.*pi);
+//             hsv2rgb(hsv, col);
             
             float sc = clamp((r-.7)/.3,0.,1.);
             col = mix(mix(col, c.xxx, .1*sc), .4*c.xyy, sc);
@@ -241,12 +241,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 + .8*col * abs(dot(l,n))
                 + col * abs(pow(dot(reflect(-l,n),dir),3.));
                 
-            vec3 hsv;
-            rgb2hsv(col, hsv);
-            float na;
-            lfnoise(x.xy-iTime+4.*hsv.x, na);
-            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
-            hsv2rgb(hsv, col);
+//             vec3 hsv;
+//             rgb2hsv(col, hsv);
+//             float na;
+//             lfnoise(x.xy-iTime+4.*hsv.x, na);
+//             hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+//             hsv2rgb(hsv, col);
         }
     }
     col += col;

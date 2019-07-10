@@ -206,7 +206,7 @@ unsigned long __stdcall LoadMusicThread( void *lpParam)
     printf("++++ SFX shader created.\n");
     
     music_loading = 1;
-    progress += .1/NSHADERS; 
+    progress += 1./NSHADERS; 
     
     return 0;
 }
@@ -233,7 +233,7 @@ unsigned long __stdcall LoadLogo210Thread( void * lpParam)
     logo210_resolution_location = glGetUniformLocation(logo210_program, LOGO210_VAR_IRESOLUTION);
     printf("++++ Logo 210 shader created.\n");
     
-    progress += .1/NSHADERS;
+    progress += 1./NSHADERS;
     
     return 0;
 }
@@ -296,7 +296,7 @@ unsigned long __stdcall LoadTextThread(void * lpParam)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, font_texture_size, font_texture_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, font_texture);
     
-    progress += .1/NSHADERS;
+    progress += 1./NSHADERS;
     
     return 0;
 }

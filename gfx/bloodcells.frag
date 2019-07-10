@@ -147,7 +147,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             i = N;
             break;
         }
-        d += s.x<5.e-2?min(s.x,2.e-3):s.x;
+        d += s.x<1.e-2?min(s.x,5.e-4):s.x;
+        //d += s.x<5.e-2?min(s.x,2.e-3):s.x;
         //d += s.x;
     }
     
@@ -182,12 +183,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col *= col*col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
     
-    vec3 hsv;
-    rgb2hsv(col, hsv);
-    float na;
-    lfnoise(x.xy-iTime+4.*hsv.x, na);
-    hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
-    hsv2rgb(hsv, col);
+//     vec3 hsv;
+//     rgb2hsv(col, hsv);
+//     float na;
+//     lfnoise(x.xy-iTime+4.*hsv.x, na);
+//     hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+//     hsv2rgb(hsv, col);
     
 //     col = tanh(col);
     

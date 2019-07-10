@@ -153,12 +153,12 @@ void colorize(in vec2 x, out vec3 col)
     }
     vec3 c1 = vec3(.78,.61*abs(2.*x.y),.15);
     
-    vec3 hsv;
-    rgb2hsv(c1, hsv);
-    float na;
-    lfnoise(x.xy-iTime+4.*hsv.x, na);
-    hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
-    hsv2rgb(hsv, c1);
+//     vec3 hsv;
+//     rgb2hsv(c1, hsv);
+//     float na;
+//     lfnoise(x.xy-iTime+4.*hsv.x, na);
+//     hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+//     hsv2rgb(hsv, c1);
     
     col = mix(col, c1, sm(d));
     
@@ -225,17 +225,17 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             col = vec3(0.99,0.43,0.15);
             
             vec3 hsv;
-            rgb2hsv(col, hsv);
-            float na;
-            lfnoise(x.xy-iTime+4.*hsv.x, na);
-            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
-            hsv2rgb(hsv, col);
+//             rgb2hsv(col, hsv);
+//             float na;
+//             lfnoise(x.xy-iTime+4.*hsv.x, na);
+//             hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+//             hsv2rgb(hsv, col);
             
             vec3 c2 = vec3(0.44,0.07,0.66);
-            rgb2hsv(c2, hsv);
-            lfnoise(x.xy+iTime+4.*hsv.x, na);
-            hsv.x = mod(1.*hsv.x+.2*na-iTime, 2.*pi);
-            hsv2rgb(hsv, c2);
+//             rgb2hsv(c2, hsv);
+//             lfnoise(x.xy+iTime+4.*hsv.x, na);
+//             hsv.x = mod(1.*hsv.x+.2*na-iTime, 2.*pi);
+//             hsv2rgb(hsv, c2);
             
             col = mix(col,c2,sin(2.*iScale*r*x));
             col = .1*col
