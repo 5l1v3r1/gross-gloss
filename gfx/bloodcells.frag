@@ -27,6 +27,8 @@ float a = 1.0;
 
 float iScale;
 
+void hsv2rgb(in vec3 hsv, out vec3 rgb);
+void rgb2hsv(in vec3 rgb, out vec3 hsv);
 void rand(in vec2 x, out float n);
 void lfnoise(in vec2 t, out float n);
 void stroke(in float d0, in float s, out float d);
@@ -179,6 +181,14 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     col *= col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
+    
+    vec3 hsv;
+    rgb2hsv(col, hsv);
+    float na;
+    lfnoise(x.xy-iTime, na);
+    hsv.x = .4*na+mod(iTime, 2.*pi);
+    hsv2rgb(hsv, col);
+    
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }
 

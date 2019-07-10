@@ -2,8 +2,8 @@
 #ifndef SYMBOLIZE_H
 #define SYMBOLIZE_H
 
-int rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle;
-const int nsymbols = 14;
+int rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle, hsv2rgb_handle, rgb2hsv_handle;
+const int nsymbols = 16;
 const char *rand_source = "#version 130\n\n"
 "void rand(in vec2 x, out float n)\n"
 "{\n"
@@ -198,6 +198,45 @@ const char *smoothmin_source = "// iq's smooth minimum\n"
 "{\n"
 "    float h = max( k-abs(a-b), 0.0 )/k;\n"
 "    dst = min( a, b ) - h*h*h*k*(1.0/6.0);\n"
+"}\n"
+"\0";
+const char *hsv2rgb_source = "#version 130\n\n"
+"const float pi = acos(-1.);\n"
+"void hsv2rgb(in vec3 hsv, out vec3 rgb)\n"
+"{\n"
+"    float C = hsv.y * hsv.z,\n"
+"        Hprime = hsv.x / pi * 3.,\n"
+"        X = C * (1.-abs(mod(Hprime,2.)-1.));\n"
+"    \n"
+"    if(0. <= Hprime && Hprime <= 1.) rgb = vec3(C, X, 0.);\n"
+"    else if( 1. < Hprime && Hprime <= 2.) rgb = vec3(X, C, 0.);\n"
+"    else if( 2. < Hprime && Hprime <= 3.) rgb = vec3(0., C, X);\n"
+"    else if( 3. < Hprime && Hprime <= 4.) rgb = vec3(0., X, C);\n"
+"    else if( 4. < Hprime && Hprime <= 5.) rgb = vec3(X, 0., C);\n"
+"    else if( 5. < Hprime && Hprime <= 6.) rgb = vec3(C, 0., X);\n"
+"        \n"
+"    float m = hsv.z - C;\n"
+"    rgb += m;\n"
+"}\n"
+"\0";
+const char *rgb2hsv_source = "#version 130\n\n"
+"const float pi = acos(-1.);\n"
+"void rgb2hsv(in vec3 rgb, out vec3 hsv)\n"
+"{\n"
+"    float MAX = max(rgb.r, max(rgb.g, rgb.b)),\n"
+"        MIN = min(rgb.r, min(rgb.g, rgb.b)),\n"
+"        C = MAX-MIN;\n"
+"    \n"
+"    if(MAX == MIN) hsv.x = 0.;\n"
+"    else if(MAX == rgb.r) hsv.x = pi/3.*(rgb.g-rgb.b)/C;\n"
+"    else if(MAX == rgb.g) hsv.x = pi/3.*(2.+(rgb.b-rgb.r)/C);\n"
+"    else if(MAX == rgb.b) hsv.x = pi/3.*(4.+(rgb.r-rgb.g)/C);\n"
+"    hsv.x = mod(hsv.x, 2.*pi);\n"
+"        \n"
+"    if(MAX == 0.) hsv.y = 0.;\n"
+"    else hsv.y = (MAX-MIN)/MAX;\n"
+"        \n"
+"    hsv.z = MAX;\n"
 "}\n"
 "\0";
 const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
@@ -877,6 +916,8 @@ const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team21
 "\n"
 "float iScale;\n"
 "\n"
+"void hsv2rgb(in vec3 hsv, out vec3 rgb);\n"
+"void rgb2hsv(in vec3 rgb, out vec3 hsv);\n"
 "void rand(in vec2 x, out float n);\n"
 "void lfnoise(in vec2 t, out float n);\n"
 "void stroke(in float d0, in float s, out float d);\n"
@@ -1029,6 +1070,14 @@ const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team21
 "    \n"
 "    col *= col;\n"
 "    col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));\n"
+"    \n"
+"    vec3 hsv;\n"
+"    rgb2hsv(col, hsv);\n"
+"    float na;\n"
+"    lfnoise(x.xy-iTime, na);\n"
+"    hsv.x = .4*na+mod(iTime, 2.*pi);\n"
+"    hsv2rgb(hsv, col);\n"
+"    \n"
 "    fragColor = vec4(clamp(col,0.,1.),1.0);\n"
 "}\n"
 "\n"
@@ -1219,6 +1268,32 @@ void Loadsmoothmin()
 #endif
     progress += .2/(float)nsymbols;
 }
+void Loadhsv2rgb()
+{
+    int hsv2rgb_size = strlen(hsv2rgb_source);
+    hsv2rgb_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(hsv2rgb_handle, 1, (GLchar **)&hsv2rgb_source, &hsv2rgb_size);
+    glCompileShader(hsv2rgb_handle);
+#ifdef DEBUG
+    printf("---> hsv2rgb Shader:\n");
+    debug(hsv2rgb_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
+void Loadrgb2hsv()
+{
+    int rgb2hsv_size = strlen(rgb2hsv_source);
+    rgb2hsv_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(rgb2hsv_handle, 1, (GLchar **)&rgb2hsv_source, &rgb2hsv_size);
+    glCompileShader(rgb2hsv_handle);
+#ifdef DEBUG
+    printf("---> rgb2hsv Shader:\n");
+    debug(rgb2hsv_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
 
 void LoadSymbols()
 {
@@ -1249,6 +1324,10 @@ void LoadSymbols()
     Loaddspline2();
     updateBar();
     Loadsmoothmin();
+    updateBar();
+    Loadhsv2rgb();
+    updateBar();
+    Loadrgb2hsv();
     updateBar();
 }
 int voronoidesign_program, voronoidesign_handle, groundboxes_program, groundboxes_handle, graffiti_program, graffiti_handle, bloodcells_program, bloodcells_handle;
@@ -1375,6 +1454,8 @@ void Loadbloodcells()
 #endif
     bloodcells_program = glCreateProgram();
     glAttachShader(bloodcells_program,bloodcells_handle);
+    glAttachShader(bloodcells_program,hsv2rgb_handle);
+    glAttachShader(bloodcells_program,rgb2hsv_handle);
     glAttachShader(bloodcells_program,rand_handle);
     glAttachShader(bloodcells_program,lfnoise_handle);
     glAttachShader(bloodcells_program,stroke_handle);
