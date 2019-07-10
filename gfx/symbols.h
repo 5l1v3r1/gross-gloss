@@ -848,6 +848,195 @@ const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 
 "    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
 "}\n"
 "\0";
+const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
+"* Copyright (C) 2019  Alexander Kraus <nr4@z10.info>\n"
+"*\n"
+"* This program is free software: you can redistribute it and/or modify\n"
+"* it under the terms of the GNU General Public License as published by\n"
+"* the Free Software Foundation, either version 3 of the License, or\n"
+"* (at your option) any later version.\n"
+"*\n"
+"* This program is distributed in the hope that it will be useful,\n"
+"* but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"* GNU General Public License for more details.\n"
+"*\n"
+"* You should have received a copy of the GNU General Public License\n"
+"* along with this program.  If not, see <https://www.gnu.org/licenses/>.\n"
+"*/\n"
+"\n"
+"#version 130\n\n"
+"\n"
+"uniform float iTime;\n"
+"uniform vec2 iResolution;\n"
+"\n"
+"// Global constants\n"
+"const float pi = acos(-1.);\n"
+"const vec3 c = vec3(1.0, 0.0, -1.0);\n"
+"float a = 1.0;\n"
+"\n"
+"float iScale;\n"
+"\n"
+"void rand(in vec2 x, out float n);\n"
+"void lfnoise(in vec2 t, out float n);\n"
+"void stroke(in float d0, in float s, out float d);\n"
+"void zextrude(in float z, in float d2d, in float h, out float d);\n"
+"float sm(float d)\n"
+"{\n"
+"    return smoothstep(1.5/iResolution.y, -1.5/iResolution.y, d);\n"
+"}\n"
+"void smoothmin(in float a, in float b, in float k, out float dst);\n"
+"void dsmoothvoronoi(in vec2 x, out float d, out vec2 z)\n"
+"{\n"
+"    float n;\n"
+"    lfnoise(x-iTime*c.xy, n);\n"
+"    \n"
+"    vec2 y = floor(x);\n"
+"       float ret = 1.;\n"
+"    vec2 pf=c.yy, p;\n"
+"    float df=10.;\n"
+"    \n"
+"    for(int i=-1; i<=1; i+=1)\n"
+"        for(int j=-1; j<=1; j+=1)\n"
+"        {\n"
+"            p = y + vec2(float(i), float(j));\n"
+"            float pa;\n"
+"            rand(p, pa);\n"
+"            p += pa;\n"
+"            \n"
+"            d = length(x-p);\n"
+"            \n"
+"            if(d < df)\n"
+"            {\n"
+"                df = d;\n"
+"                pf = p;\n"
+"            }\n"
+"        }\n"
+"    for(int i=-1; i<=1; i+=1)\n"
+"        for(int j=-1; j<=1; j+=1)\n"
+"        {\n"
+"            p = y + vec2(float(i), float(j));\n"
+"            float pa;\n"
+"            rand(p, pa);\n"
+"            p += pa;\n"
+"            \n"
+"            vec2 o = p - pf;\n"
+"            d = length(.5*o-dot(x-pf, o)/dot(o,o)*o);\n"
+"            smoothmin(ret, d, .4+.38*n, ret);\n"
+"        }\n"
+"    \n"
+"    d = ret;\n"
+"    z = pf;\n"
+"}\n"
+"\n"
+"void add(in vec2 sda, in vec2 sdb, out vec2 sdf);\n"
+"vec2 ind;\n"
+"void scene(in vec3 x, out vec2 sdf)\n"
+"{    \n"
+"    x.y += .3*iTime;\n"
+"    float d;\n"
+"    dsmoothvoronoi(2.*x.xy,d,ind);\n"
+"    stroke(d, .1, d);\n"
+"    float modsize = .04,\n"
+"		y = mod(d,modsize)-.5*modsize,\n"
+"        yi = (d-y)/modsize;\n"
+"    \n"
+"    float n;\n"
+"    lfnoise(2.*yi*c.xx, n);\n"
+"    \n"
+"    zextrude(x.z-.05*n, -y, .05+.05*n, d);\n"
+"    \n"
+"    stroke(d,.02,d);\n"
+"    \n"
+"    sdf = vec2(d, 2.);\n"
+"    \n"
+"    add(sdf, vec2(x.z+.05,1.), sdf);\n"
+"}   \n"
+"\n"
+"void normal(in vec3 x, out vec3 n, in float dx);\n"
+"\n"
+"void colorize(in vec2 x, out vec3 col)\n"
+"{\n"
+"    col = .5*c.xxx;\n"
+"\n"
+"}\n"
+"\n"
+"void mainImage( out vec4 fragColor, in vec2 fragCoord )\n"
+"{\n"
+"    a = iResolution.x/iResolution.y;\n"
+"    \n"
+"    iScale = fract(iTime);\n"
+"    \n"
+"    vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), \n"
+"        s;\n"
+"    vec3 col = c.yyy, \n"
+"        o = c.yzx,\n"
+"        r = c.xyy, \n"
+"        u = normalize(c.yxx),\n"
+"        t = c.yyy, \n"
+"        dir,\n"
+"        n,\n"
+"        x;\n"
+"    int N = 200,\n"
+"        i;\n"
+"    t = uv.x * r + uv.y * u;\n"
+"    dir = normalize(t-o);\n"
+"\n"
+"    float d = -(o.z-.1)/dir.z;\n"
+"    \n"
+"    for(i = 0; i<N; ++i)\n"
+"    {\n"
+"     	x = o + d * dir;\n"
+"        scene(x,s);\n"
+"        if(s.x < 1.e-4)break;\n"
+"        if(x.z<-.1)\n"
+"        {\n"
+"            col = .2*c.xxx;\n"
+"            i = N;\n"
+"            break;\n"
+"        }\n"
+"        d += min(s.x,3.e-3);\n"
+"        //d += s.x;\n"
+"    }\n"
+"    \n"
+"    if(i < N)\n"
+"    {\n"
+"        normal(x,n, 5.e-3);\n"
+"        \n"
+"        if(s.y == 1.)\n"
+"        {\n"
+"            vec3 l = normalize(x+.5*c.yzx);\n"
+"            colorize(x.xy, col);\n"
+"            col = .1*col\n"
+"                + 1.*col * abs(dot(l,n))\n"
+"                + 1.5 * col * abs(pow(dot(reflect(x-l,n),dir),2.));\n"
+"        }\n"
+"        else if(s.y == 2.)\n"
+"        {\n"
+"            vec3 l = normalize(x+c.xzx);\n"
+"            float r;\n"
+"            lfnoise(x.xy-iTime, r);\n"
+"            col = mix(vec3(0.99,0.43,0.15),vec3(0.44,0.07,0.66),.5+.5*sin(2.*iScale*r*x));\n"
+"            vec3 c1 = mix(vec3(0.99,0.43,0.15),vec3(0.44,0.07,0.66),.5*sin(2.*iScale*r*x));\n"
+"            col = mix(col, c1, .5+.5*r);\n"
+"            col = .1*col\n"
+"                + .8*col * abs(dot(l,n))\n"
+"                + 6.5*col * abs(pow(dot(reflect(x-l,n),dir),3.));\n"
+"        }\n"
+"    }\n"
+"    \n"
+"    //col += col;\n"
+"    \n"
+"    col *= col;\n"
+"    col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));\n"
+"    fragColor = vec4(clamp(col,0.,1.),1.0);\n"
+"}\n"
+"\n"
+"void main()\n"
+"{\n"
+"    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
+"}\n"
+"\0";
 void Loadrand()
 {
     int rand_size = strlen(rand_source);
@@ -1062,14 +1251,16 @@ void LoadSymbols()
     Loadsmoothmin();
     updateBar();
 }
-int voronoidesign_program, voronoidesign_handle, groundboxes_program, groundboxes_handle, graffiti_program, graffiti_handle;
+int voronoidesign_program, voronoidesign_handle, groundboxes_program, groundboxes_handle, graffiti_program, graffiti_handle, bloodcells_program, bloodcells_handle;
 int voronoidesign_iTime_location;
 voronoidesign_iResolution_location;
 int groundboxes_iTime_location;
 groundboxes_iResolution_location;
 int graffiti_iTime_location;
 graffiti_iResolution_location;
-const int nprograms = 3;
+int bloodcells_iTime_location;
+bloodcells_iResolution_location;
+const int nprograms = 4;
 
 void Loadvoronoidesign()
 {
@@ -1171,6 +1362,38 @@ void Loadgraffiti()
     progress += .2/(float)nprograms;
 }
 
+void Loadbloodcells()
+{
+    int bloodcells_size = strlen(bloodcells_source);
+    bloodcells_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(bloodcells_handle, 1, (GLchar **)&bloodcells_source, &bloodcells_size);
+    glCompileShader(bloodcells_handle);
+#ifdef DEBUG
+    printf("---> bloodcells Shader:\n");
+    debug(bloodcells_handle);
+    printf(">>>>\n");
+#endif
+    bloodcells_program = glCreateProgram();
+    glAttachShader(bloodcells_program,bloodcells_handle);
+    glAttachShader(bloodcells_program,rand_handle);
+    glAttachShader(bloodcells_program,lfnoise_handle);
+    glAttachShader(bloodcells_program,stroke_handle);
+    glAttachShader(bloodcells_program,zextrude_handle);
+    glAttachShader(bloodcells_program,smoothmin_handle);
+    glAttachShader(bloodcells_program,add_handle);
+    glAttachShader(bloodcells_program,normal_handle);
+    glLinkProgram(bloodcells_program);
+#ifdef DEBUG
+    printf("---> bloodcells Program:\n");
+    debugp(bloodcells_program);
+    printf(">>>>\n");
+#endif
+    glUseProgram(bloodcells_program);
+    bloodcells_iTime_location = glGetUniformLocation(bloodcells_program, "iTime");
+    bloodcells_iResolution_location = glGetUniformLocation(bloodcells_program, "iResolution");
+    progress += .2/(float)nprograms;
+}
+
 void LoadPrograms()
 {
     Loadvoronoidesign();
@@ -1178,6 +1401,8 @@ void LoadPrograms()
     Loadgroundboxes();
     updateBar();
     Loadgraffiti();
+    updateBar();
+    Loadbloodcells();
     updateBar();
 }
 #endif

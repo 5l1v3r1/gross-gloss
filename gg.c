@@ -386,11 +386,17 @@ void draw()
             glUniform1f(groundboxes_iTime_location, t-10.);
             glUniform2f(groundboxes_iResolution_location, w, h);
         }
-        else if(t < 9000.)
+        else if(t < 30.)
         {
             glUseProgram(graffiti_program);
             glUniform1f(graffiti_iTime_location, t-20.);
             glUniform2f(graffiti_iResolution_location, w, h);
+        }
+        else if(t < 9000.)
+        {
+            glUseProgram(bloodcells_program);
+            glUniform1f(bloodcells_iTime_location, t-30.);
+            glUniform2f(bloodcells_iResolution_location, w, h);
         }
 
         else ExitProcess(0);

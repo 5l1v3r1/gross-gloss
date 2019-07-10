@@ -299,8 +299,7 @@ vec2 mainSynth(float time)
     float dR = 0.;
 
     // mod for looping
-    float BT = mod(BPS * time, max_mod_off);
-    time = SPB * BT;
+    float BT = BPS * time;
     
     float time2 = time - stereo_delay;
     float sidechain = 1.;
