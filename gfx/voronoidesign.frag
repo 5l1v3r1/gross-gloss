@@ -27,6 +27,8 @@ float a = 1.0;
 
 float iScale;
 
+void hsv2rgb(in vec3 hsv, out vec3 rgb);
+void rgb2hsv(in vec3 rgb, out vec3 hsv);
 void rand(in vec2 x, out float n);
 void lfnoise(in vec2 t, out float n);
 void mfnoise(in vec2 x, in float d, in float b, in float e, out float n);
@@ -133,7 +135,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             i = N;
             break;
         }
-        d += min(s.x,3.e-3);
+        d += s.x<5.e-2?min(s.x,2.e-3):s.x;
+        //d += min(s.x,3.e-3);
         //d += s.x;
     }
     
@@ -148,6 +151,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             col = .1*col
                 + 1.8*col * abs(dot(l,n))
                 + 2.5 * col * abs(pow(dot(reflect(x-l,n),dir),2.));
+            vec3 hsv;
+            rgb2hsv(col, hsv);
+            float na;
+            lfnoise(x.xy-iTime+4.*hsv.x, na);
+            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+            hsv2rgb(hsv, col);
         }
         else if(s.y == 2.)
         {
@@ -158,6 +167,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             col = .1*col
                 + .8*col * abs(dot(l,n))
                 + 6.5*col * abs(pow(dot(reflect(x-l,n),dir),3.));
+                        vec3 hsv;
+            rgb2hsv(col, hsv);
+            float na;
+            lfnoise(x.xy+iTime+4.*hsv.x, na);
+            hsv.x = mod(1.*hsv.x+.2*na-iTime, 2.*pi);
+            hsv2rgb(hsv, col);
         }
     }
     
@@ -165,6 +180,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     col *= col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
+    
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }	
 

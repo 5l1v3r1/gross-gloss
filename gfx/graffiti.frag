@@ -27,6 +27,8 @@ float a = 1.0;
 
 float iScale;
 
+void hsv2rgb(in vec3 hsv, out vec3 rgb);
+void rgb2hsv(in vec3 rgb, out vec3 hsv);
 void rand(in vec2 x, out float n);
 void lfnoise(in vec2 t, out float n);
 void dlinesegment(in vec2 x, in vec2 p1, in vec2 p2, out float d);
@@ -149,7 +151,16 @@ void colorize(in vec2 x, out vec3 col)
    		 stroke(d,.18, d);
         smoothmin(d, da, .2, d);
     }
-    col = mix(col, vec3(.78,.61*abs(2.*x.y),.15), sm(d));
+    vec3 c1 = vec3(.78,.61*abs(2.*x.y),.15);
+    
+    vec3 hsv;
+    rgb2hsv(c1, hsv);
+    float na;
+    lfnoise(x.xy-iTime+4.*hsv.x, na);
+    hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+    hsv2rgb(hsv, c1);
+    
+    col = mix(col, c1, sm(d));
     
     stroke(d-.03, .03, d);
     col = mix(col, c.yyy, sm(d));
@@ -204,13 +215,29 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             col = .1*col
                 + 1.*col * abs(dot(l,n))
                 + 1.5 * col * abs(pow(dot(reflect(x-l,n),dir),2.));
+            
         }
         else if(s.y == 2.)
         {
             vec3 l = normalize(x+c.xzx);
             float r;
             lfnoise(x.xy, r);
-            col = mix(vec3(0.99,0.43,0.15),vec3(0.44,0.07,0.66),sin(2.*iScale*r*x));
+            col = vec3(0.99,0.43,0.15);
+            
+            vec3 hsv;
+            rgb2hsv(col, hsv);
+            float na;
+            lfnoise(x.xy-iTime+4.*hsv.x, na);
+            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
+            hsv2rgb(hsv, col);
+            
+            vec3 c2 = vec3(0.44,0.07,0.66);
+            rgb2hsv(c2, hsv);
+            lfnoise(x.xy+iTime+4.*hsv.x, na);
+            hsv.x = mod(1.*hsv.x+.2*na-iTime, 2.*pi);
+            hsv2rgb(hsv, c2);
+            
+            col = mix(col,c2,sin(2.*iScale*r*x));
             col = .1*col
                 + .8*col * abs(dot(l,n))
                 + 6.5*col * abs(pow(dot(reflect(x-l,n),dir),3.));
@@ -221,6 +248,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     col *= col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
+    
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }
 

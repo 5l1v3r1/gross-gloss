@@ -2,8 +2,47 @@
 #ifndef SYMBOLIZE_H
 #define SYMBOLIZE_H
 
-int rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle, hsv2rgb_handle, rgb2hsv_handle;
+int hsv2rgb_handle, rgb2hsv_handle, rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle;
 const int nsymbols = 16;
+const char *hsv2rgb_source = "#version 130\n\n"
+"const float pi = acos(-1.);\n"
+"void hsv2rgb(in vec3 hsv, out vec3 rgb)\n"
+"{\n"
+"    float C = hsv.y * hsv.z,\n"
+"        Hprime = hsv.x / pi * 3.,\n"
+"        X = C * (1.-abs(mod(Hprime,2.)-1.));\n"
+"    \n"
+"    if(0. <= Hprime && Hprime <= 1.) rgb = vec3(C, X, 0.);\n"
+"    else if( 1. < Hprime && Hprime <= 2.) rgb = vec3(X, C, 0.);\n"
+"    else if( 2. < Hprime && Hprime <= 3.) rgb = vec3(0., C, X);\n"
+"    else if( 3. < Hprime && Hprime <= 4.) rgb = vec3(0., X, C);\n"
+"    else if( 4. < Hprime && Hprime <= 5.) rgb = vec3(X, 0., C);\n"
+"    else if( 5. < Hprime && Hprime <= 6.) rgb = vec3(C, 0., X);\n"
+"        \n"
+"    float m = hsv.z - C;\n"
+"    rgb += m;\n"
+"}\n"
+"\0";
+const char *rgb2hsv_source = "#version 130\n\n"
+"const float pi = acos(-1.);\n"
+"void rgb2hsv(in vec3 rgb, out vec3 hsv)\n"
+"{\n"
+"    float MAX = max(rgb.r, max(rgb.g, rgb.b)),\n"
+"        MIN = min(rgb.r, min(rgb.g, rgb.b)),\n"
+"        C = MAX-MIN;\n"
+"    \n"
+"    if(MAX == MIN) hsv.x = 0.;\n"
+"    else if(MAX == rgb.r) hsv.x = pi/3.*(rgb.g-rgb.b)/C;\n"
+"    else if(MAX == rgb.g) hsv.x = pi/3.*(2.+(rgb.b-rgb.r)/C);\n"
+"    else if(MAX == rgb.b) hsv.x = pi/3.*(4.+(rgb.r-rgb.g)/C);\n"
+"    hsv.x = mod(hsv.x, 2.*pi);\n"
+"        \n"
+"    if(MAX == 0.) hsv.y = 0.;\n"
+"    else hsv.y = (MAX-MIN)/MAX;\n"
+"        \n"
+"    hsv.z = MAX;\n"
+"}\n"
+"\0";
 const char *rand_source = "#version 130\n\n"
 "void rand(in vec2 x, out float n)\n"
 "{\n"
@@ -200,45 +239,6 @@ const char *smoothmin_source = "// iq's smooth minimum\n"
 "    dst = min( a, b ) - h*h*h*k*(1.0/6.0);\n"
 "}\n"
 "\0";
-const char *hsv2rgb_source = "#version 130\n\n"
-"const float pi = acos(-1.);\n"
-"void hsv2rgb(in vec3 hsv, out vec3 rgb)\n"
-"{\n"
-"    float C = hsv.y * hsv.z,\n"
-"        Hprime = hsv.x / pi * 3.,\n"
-"        X = C * (1.-abs(mod(Hprime,2.)-1.));\n"
-"    \n"
-"    if(0. <= Hprime && Hprime <= 1.) rgb = vec3(C, X, 0.);\n"
-"    else if( 1. < Hprime && Hprime <= 2.) rgb = vec3(X, C, 0.);\n"
-"    else if( 2. < Hprime && Hprime <= 3.) rgb = vec3(0., C, X);\n"
-"    else if( 3. < Hprime && Hprime <= 4.) rgb = vec3(0., X, C);\n"
-"    else if( 4. < Hprime && Hprime <= 5.) rgb = vec3(X, 0., C);\n"
-"    else if( 5. < Hprime && Hprime <= 6.) rgb = vec3(C, 0., X);\n"
-"        \n"
-"    float m = hsv.z - C;\n"
-"    rgb += m;\n"
-"}\n"
-"\0";
-const char *rgb2hsv_source = "#version 130\n\n"
-"const float pi = acos(-1.);\n"
-"void rgb2hsv(in vec3 rgb, out vec3 hsv)\n"
-"{\n"
-"    float MAX = max(rgb.r, max(rgb.g, rgb.b)),\n"
-"        MIN = min(rgb.r, min(rgb.g, rgb.b)),\n"
-"        C = MAX-MIN;\n"
-"    \n"
-"    if(MAX == MIN) hsv.x = 0.;\n"
-"    else if(MAX == rgb.r) hsv.x = pi/3.*(rgb.g-rgb.b)/C;\n"
-"    else if(MAX == rgb.g) hsv.x = pi/3.*(2.+(rgb.b-rgb.r)/C);\n"
-"    else if(MAX == rgb.b) hsv.x = pi/3.*(4.+(rgb.r-rgb.g)/C);\n"
-"    hsv.x = mod(hsv.x, 2.*pi);\n"
-"        \n"
-"    if(MAX == 0.) hsv.y = 0.;\n"
-"    else hsv.y = (MAX-MIN)/MAX;\n"
-"        \n"
-"    hsv.z = MAX;\n"
-"}\n"
-"\0";
 const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
 "* Copyright (C) 2018  Alexander Kraus <nr4@z10.info>\n"
 "*\n"
@@ -268,6 +268,8 @@ const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Tea
 "\n"
 "float iScale;\n"
 "\n"
+"void hsv2rgb(in vec3 hsv, out vec3 rgb);\n"
+"void rgb2hsv(in vec3 rgb, out vec3 hsv);\n"
 "void rand(in vec2 x, out float n);\n"
 "void lfnoise(in vec2 t, out float n);\n"
 "void mfnoise(in vec2 x, in float d, in float b, in float e, out float n);\n"
@@ -374,7 +376,8 @@ const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Tea
 "            i = N;\n"
 "            break;\n"
 "        }\n"
-"        d += min(s.x,3.e-3);\n"
+"        d += s.x<5.e-2?min(s.x,2.e-3):s.x;\n"
+"        //d += min(s.x,3.e-3);\n"
 "        //d += s.x;\n"
 "    }\n"
 "    \n"
@@ -389,6 +392,12 @@ const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Tea
 "            col = .1*col\n"
 "                + 1.8*col * abs(dot(l,n))\n"
 "                + 2.5 * col * abs(pow(dot(reflect(x-l,n),dir),2.));\n"
+"            vec3 hsv;\n"
+"            rgb2hsv(col, hsv);\n"
+"            float na;\n"
+"            lfnoise(x.xy-iTime+4.*hsv.x, na);\n"
+"            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);\n"
+"            hsv2rgb(hsv, col);\n"
 "        }\n"
 "        else if(s.y == 2.)\n"
 "        {\n"
@@ -399,6 +408,12 @@ const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Tea
 "            col = .1*col\n"
 "                + .8*col * abs(dot(l,n))\n"
 "                + 6.5*col * abs(pow(dot(reflect(x-l,n),dir),3.));\n"
+"                        vec3 hsv;\n"
+"            rgb2hsv(col, hsv);\n"
+"            float na;\n"
+"            lfnoise(x.xy+iTime+4.*hsv.x, na);\n"
+"            hsv.x = mod(1.*hsv.x+.2*na-iTime, 2.*pi);\n"
+"            hsv2rgb(hsv, col);\n"
 "        }\n"
 "    }\n"
 "    \n"
@@ -406,6 +421,7 @@ const char *voronoidesign_source = "/* Gross Gloss by Team210 - 64k intro by Tea
 "    \n"
 "    col *= col;\n"
 "    col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));\n"
+"    \n"
 "    fragColor = vec4(clamp(col,0.,1.),1.0);\n"
 "}	\n"
 "\n"
@@ -445,6 +461,8 @@ const char *groundboxes_source = "/* Gross Gloss by Team210 - 64k intro by Team2
 "\n"
 "float iScale;\n"
 "\n"
+"void hsv2rgb(in vec3 hsv, out vec3 rgb);\n"
+"void rgb2hsv(in vec3 rgb, out vec3 hsv);\n"
 "void rand(in vec2 x, out float n);\n"
 "void lfnoise(in vec2 t, out float n);\n"
 "void rot3(in vec3 p, out mat3 rot);\n"
@@ -606,14 +624,25 @@ const char *groundboxes_source = "/* Gross Gloss by Team210 - 64k intro by Team2
 "            vec3 l = normalize(x+c.xzx);\n"
 "            vec3 c1;\n"
 "            \n"
-"            float r;\n"
+"            float r,si = 1.;\n"
 "		    rand(ind-1.e2*floor(iTime), r);\n"
 "            if(r > .9)\n"
 "                col = c.xyy;\n"
 "            else if(r > .8)\n"
+"            {\n"
 "                col = .7*c.xxy;\n"
+"                si = -1.;\n"
+"            }\n"
 "            else if(r > .7)\n"
 "                col = mix(c.xxy, c.xyy, .5);\n"
+"            \n"
+"            vec3 hsv;\n"
+"            rgb2hsv(col, hsv);\n"
+"            float na;\n"
+"            lfnoise(x.xy-si*iTime+4.*hsv.x, na);\n"
+"            hsv.x = mod(1.*hsv.x+.2*na+si*iTime, 2.*pi);\n"
+"            hsv2rgb(hsv, col);\n"
+"            \n"
 "            float sc = clamp((r-.7)/.3,0.,1.);\n"
 "            col = mix(mix(col, c.xxx, .1*sc), .4*c.xyy, sc);\n"
 "            col = .3*col\n"
@@ -643,6 +672,13 @@ const char *groundboxes_source = "/* Gross Gloss by Team210 - 64k intro by Team2
 "            col = .1*col\n"
 "                + .8*col * abs(dot(l,n))\n"
 "                + col * abs(pow(dot(reflect(-l,n),dir),3.));\n"
+"                \n"
+"            vec3 hsv;\n"
+"            rgb2hsv(col, hsv);\n"
+"            float na;\n"
+"            lfnoise(x.xy-iTime+4.*hsv.x, na);\n"
+"            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);\n"
+"            hsv2rgb(hsv, col);\n"
 "        }\n"
 "    }\n"
 "    col += col;\n"
@@ -685,6 +721,8 @@ const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 
 "\n"
 "float iScale;\n"
 "\n"
+"void hsv2rgb(in vec3 hsv, out vec3 rgb);\n"
+"void rgb2hsv(in vec3 rgb, out vec3 hsv);\n"
 "void rand(in vec2 x, out float n);\n"
 "void lfnoise(in vec2 t, out float n);\n"
 "void dlinesegment(in vec2 x, in vec2 p1, in vec2 p2, out float d);\n"
@@ -807,7 +845,16 @@ const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 
 "   		 stroke(d,.18, d);\n"
 "        smoothmin(d, da, .2, d);\n"
 "    }\n"
-"    col = mix(col, vec3(.78,.61*abs(2.*x.y),.15), sm(d));\n"
+"    vec3 c1 = vec3(.78,.61*abs(2.*x.y),.15);\n"
+"    \n"
+"    vec3 hsv;\n"
+"    rgb2hsv(c1, hsv);\n"
+"    float na;\n"
+"    lfnoise(x.xy-iTime+4.*hsv.x, na);\n"
+"    hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);\n"
+"    hsv2rgb(hsv, c1);\n"
+"    \n"
+"    col = mix(col, c1, sm(d));\n"
 "    \n"
 "    stroke(d-.03, .03, d);\n"
 "    col = mix(col, c.yyy, sm(d));\n"
@@ -862,13 +909,29 @@ const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 
 "            col = .1*col\n"
 "                + 1.*col * abs(dot(l,n))\n"
 "                + 1.5 * col * abs(pow(dot(reflect(x-l,n),dir),2.));\n"
+"            \n"
 "        }\n"
 "        else if(s.y == 2.)\n"
 "        {\n"
 "            vec3 l = normalize(x+c.xzx);\n"
 "            float r;\n"
 "            lfnoise(x.xy, r);\n"
-"            col = mix(vec3(0.99,0.43,0.15),vec3(0.44,0.07,0.66),sin(2.*iScale*r*x));\n"
+"            col = vec3(0.99,0.43,0.15);\n"
+"            \n"
+"            vec3 hsv;\n"
+"            rgb2hsv(col, hsv);\n"
+"            float na;\n"
+"            lfnoise(x.xy-iTime+4.*hsv.x, na);\n"
+"            hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);\n"
+"            hsv2rgb(hsv, col);\n"
+"            \n"
+"            vec3 c2 = vec3(0.44,0.07,0.66);\n"
+"            rgb2hsv(c2, hsv);\n"
+"            lfnoise(x.xy+iTime+4.*hsv.x, na);\n"
+"            hsv.x = mod(1.*hsv.x+.2*na-iTime, 2.*pi);\n"
+"            hsv2rgb(hsv, c2);\n"
+"            \n"
+"            col = mix(col,c2,sin(2.*iScale*r*x));\n"
 "            col = .1*col\n"
 "                + .8*col * abs(dot(l,n))\n"
 "                + 6.5*col * abs(pow(dot(reflect(x-l,n),dir),3.));\n"
@@ -879,6 +942,7 @@ const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 
 "    \n"
 "    col *= col;\n"
 "    col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));\n"
+"    \n"
 "    fragColor = vec4(clamp(col,0.,1.),1.0);\n"
 "}\n"
 "\n"
@@ -979,11 +1043,11 @@ const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team21
 "    dsmoothvoronoi(2.*x.xy,d,ind);\n"
 "    stroke(d, .1, d);\n"
 "    float modsize = .04,\n"
-"		y = mod(d,modsize)-.5*modsize,\n"
+"		y = mod(d-.02*iTime,modsize)-.5*modsize,\n"
 "        yi = (d-y)/modsize;\n"
 "    \n"
 "    float n;\n"
-"    lfnoise(2.*yi*c.xx, n);\n"
+"    lfnoise(2.*yi*c.xx-.3*iTime, n);\n"
 "    \n"
 "    zextrude(x.z-.05*n, -y, .05+.05*n, d);\n"
 "    \n"
@@ -1036,7 +1100,7 @@ const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team21
 "            i = N;\n"
 "            break;\n"
 "        }\n"
-"        d += min(s.x,3.e-3);\n"
+"        d += s.x<5.e-2?min(s.x,2.e-3):s.x;\n"
 "        //d += s.x;\n"
 "    }\n"
 "    \n"
@@ -1068,15 +1132,17 @@ const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team21
 "    \n"
 "    //col += col;\n"
 "    \n"
-"    col *= col;\n"
+"    col *= col*col;\n"
 "    col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));\n"
 "    \n"
 "    vec3 hsv;\n"
 "    rgb2hsv(col, hsv);\n"
 "    float na;\n"
-"    lfnoise(x.xy-iTime, na);\n"
-"    hsv.x = .4*na+mod(iTime, 2.*pi);\n"
+"    lfnoise(x.xy-iTime+4.*hsv.x, na);\n"
+"    hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);\n"
 "    hsv2rgb(hsv, col);\n"
+"    \n"
+"//     col = tanh(col);\n"
 "    \n"
 "    fragColor = vec4(clamp(col,0.,1.),1.0);\n"
 "}\n"
@@ -1086,6 +1152,32 @@ const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team21
 "    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
 "}\n"
 "\0";
+void Loadhsv2rgb()
+{
+    int hsv2rgb_size = strlen(hsv2rgb_source);
+    hsv2rgb_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(hsv2rgb_handle, 1, (GLchar **)&hsv2rgb_source, &hsv2rgb_size);
+    glCompileShader(hsv2rgb_handle);
+#ifdef DEBUG
+    printf("---> hsv2rgb Shader:\n");
+    debug(hsv2rgb_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
+void Loadrgb2hsv()
+{
+    int rgb2hsv_size = strlen(rgb2hsv_source);
+    rgb2hsv_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(rgb2hsv_handle, 1, (GLchar **)&rgb2hsv_source, &rgb2hsv_size);
+    glCompileShader(rgb2hsv_handle);
+#ifdef DEBUG
+    printf("---> rgb2hsv Shader:\n");
+    debug(rgb2hsv_handle);
+    printf(">>>>\n");
+#endif
+    progress += .2/(float)nsymbols;
+}
 void Loadrand()
 {
     int rand_size = strlen(rand_source);
@@ -1268,35 +1360,13 @@ void Loadsmoothmin()
 #endif
     progress += .2/(float)nsymbols;
 }
-void Loadhsv2rgb()
-{
-    int hsv2rgb_size = strlen(hsv2rgb_source);
-    hsv2rgb_handle = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(hsv2rgb_handle, 1, (GLchar **)&hsv2rgb_source, &hsv2rgb_size);
-    glCompileShader(hsv2rgb_handle);
-#ifdef DEBUG
-    printf("---> hsv2rgb Shader:\n");
-    debug(hsv2rgb_handle);
-    printf(">>>>\n");
-#endif
-    progress += .2/(float)nsymbols;
-}
-void Loadrgb2hsv()
-{
-    int rgb2hsv_size = strlen(rgb2hsv_source);
-    rgb2hsv_handle = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(rgb2hsv_handle, 1, (GLchar **)&rgb2hsv_source, &rgb2hsv_size);
-    glCompileShader(rgb2hsv_handle);
-#ifdef DEBUG
-    printf("---> rgb2hsv Shader:\n");
-    debug(rgb2hsv_handle);
-    printf(">>>>\n");
-#endif
-    progress += .2/(float)nsymbols;
-}
 
 void LoadSymbols()
 {
+    Loadhsv2rgb();
+    updateBar();
+    Loadrgb2hsv();
+    updateBar();
     Loadrand();
     updateBar();
     Loadlfnoise();
@@ -1325,10 +1395,6 @@ void LoadSymbols()
     updateBar();
     Loadsmoothmin();
     updateBar();
-    Loadhsv2rgb();
-    updateBar();
-    Loadrgb2hsv();
-    updateBar();
 }
 int voronoidesign_program, voronoidesign_handle, groundboxes_program, groundboxes_handle, graffiti_program, graffiti_handle, bloodcells_program, bloodcells_handle;
 int voronoidesign_iTime_location;
@@ -1354,6 +1420,8 @@ void Loadvoronoidesign()
 #endif
     voronoidesign_program = glCreateProgram();
     glAttachShader(voronoidesign_program,voronoidesign_handle);
+    glAttachShader(voronoidesign_program,hsv2rgb_handle);
+    glAttachShader(voronoidesign_program,rgb2hsv_handle);
     glAttachShader(voronoidesign_program,rand_handle);
     glAttachShader(voronoidesign_program,lfnoise_handle);
     glAttachShader(voronoidesign_program,mfnoise_handle);
@@ -1386,6 +1454,8 @@ void Loadgroundboxes()
 #endif
     groundboxes_program = glCreateProgram();
     glAttachShader(groundboxes_program,groundboxes_handle);
+    glAttachShader(groundboxes_program,hsv2rgb_handle);
+    glAttachShader(groundboxes_program,rgb2hsv_handle);
     glAttachShader(groundboxes_program,rand_handle);
     glAttachShader(groundboxes_program,lfnoise_handle);
     glAttachShader(groundboxes_program,rot3_handle);
@@ -1420,6 +1490,8 @@ void Loadgraffiti()
 #endif
     graffiti_program = glCreateProgram();
     glAttachShader(graffiti_program,graffiti_handle);
+    glAttachShader(graffiti_program,hsv2rgb_handle);
+    glAttachShader(graffiti_program,rgb2hsv_handle);
     glAttachShader(graffiti_program,rand_handle);
     glAttachShader(graffiti_program,lfnoise_handle);
     glAttachShader(graffiti_program,dlinesegment_handle);

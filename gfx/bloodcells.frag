@@ -90,11 +90,11 @@ void scene(in vec3 x, out vec2 sdf)
     dsmoothvoronoi(2.*x.xy,d,ind);
     stroke(d, .1, d);
     float modsize = .04,
-		y = mod(d,modsize)-.5*modsize,
+		y = mod(d-.02*iTime,modsize)-.5*modsize,
         yi = (d-y)/modsize;
     
     float n;
-    lfnoise(2.*yi*c.xx, n);
+    lfnoise(2.*yi*c.xx-.3*iTime, n);
     
     zextrude(x.z-.05*n, -y, .05+.05*n, d);
     
@@ -147,7 +147,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             i = N;
             break;
         }
-        d += min(s.x,3.e-3);
+        d += s.x<5.e-2?min(s.x,2.e-3):s.x;
         //d += s.x;
     }
     
@@ -179,15 +179,17 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     //col += col;
     
-    col *= col;
+    col *= col*col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
     
     vec3 hsv;
     rgb2hsv(col, hsv);
     float na;
-    lfnoise(x.xy-iTime, na);
-    hsv.x = .4*na+mod(iTime, 2.*pi);
+    lfnoise(x.xy-iTime+4.*hsv.x, na);
+    hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
     hsv2rgb(hsv, col);
+    
+//     col = tanh(col);
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }
