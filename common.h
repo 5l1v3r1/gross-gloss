@@ -164,7 +164,7 @@ logo210_handle,
 	text_handle;
 
 // Demo globals
-#define duration 151.
+#define duration 157.
 double t_start = 0.,
 t_now = 0.,
 t_end = duration;

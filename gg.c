@@ -404,8 +404,22 @@ void draw()
         else ExitProcess(0);
     }
     quad();
+
+    // Render post processing to buffer
+    glUseProgram(post_program);
+    glUniform2f(post_resolution_location, w, h);
+    glUniform1f(post_fsaa_location, fsaa);
+    glUniform1i(post_channel0_location, 0);
     
-    // Render text to buffer
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, first_pass_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+    quad();
+    
+    // Render text to screen
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glUseProgram(text_program);
     glUniform2f(text_resolution_location, w, h);
     glUniform1f(text_font_width_location, font_texture_size);
@@ -424,20 +438,10 @@ void draw()
     quad();
     
     // Render second pass (Post processing) to screen
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0,0,w,h);
+//     glClear(GL_COLOR_BUFFER_BIT);
+//     glViewport(0,0,w,h);
     
-    glUseProgram(post_program);
-    glUniform2f(post_resolution_location, w, h);
-    glUniform1f(post_fsaa_location, fsaa);
-    glUniform1i(post_channel0_location, 0);
     
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, first_pass_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    
-    quad();
     
     glBindTexture(GL_TEXTURE_2D, 0);
 }
