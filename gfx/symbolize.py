@@ -51,7 +51,7 @@ if rest == []:
 
 # Generate compilation header
 header_source = "//Generated with Symbolize (c) 2019 Alexander Kraus <nr4@z10.info>.\n#ifndef "
-header_source += "SYMBOLIZE_H" + "\n#define " + "SYMBOLIZE_H" + "\n\n"
+header_source += "SYMBOLIZE_H" + "\n#define " + "SYMBOLIZE_H" + "\n\nextern float progress;" 
 symbol_list = []
 scene_names = []
 scene_sources = []

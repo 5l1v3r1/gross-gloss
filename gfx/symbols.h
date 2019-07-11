@@ -2,7 +2,7 @@
 #ifndef SYMBOLIZE_H
 #define SYMBOLIZE_H
 
-int hsv2rgb_handle, rgb2hsv_handle, rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle;
+extern float progress;int hsv2rgb_handle, rgb2hsv_handle, rand_handle, lfnoise_handle, mfnoise_handle, stroke_handle, add_handle, dvoronoi_handle, normal_handle, rot3_handle, dbox_handle, dlinesegment3_handle, zextrude_handle, dlinesegment_handle, dspline2_handle, smoothmin_handle;
 const int nsymbols = 16;
 const char *hsv2rgb_source = "#version 130\n\n"
 "const float pi = acos(-1.);\n"
