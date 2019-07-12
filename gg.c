@@ -376,31 +376,30 @@ void draw()
     }
     else
     {
-        if(t < 10.)
-        {
-            glUseProgram(voronoidesign_program);
-            glUniform1f(voronoidesign_iTime_location, t);
-            glUniform2f(voronoidesign_iResolution_location, w, h);
-        }
-        else if(t < 20.)
-        {
-            glUseProgram(groundboxes_program);
-            glUniform1f(groundboxes_iTime_location, t-10.);
-            glUniform2f(groundboxes_iResolution_location, w, h);
-        }
-        else if(t < 30.)
+        if(t < 49.655)
         {
             glUseProgram(graffiti_program);
-            glUniform1f(graffiti_iTime_location, t-20.);
+            glUniform1f(graffiti_iTime_location, t);
             glUniform2f(graffiti_iResolution_location, w, h);
         }
-        else if(t < 9000.)
+        else if(t < 82.76)
+        {
+            glUseProgram(groundboxes_program);
+            glUniform1f(groundboxes_iTime_location, t-49.655);
+            glUniform2f(groundboxes_iResolution_location, w, h);
+        }
+        else if(t < 99.31)
+        {
+            glUseProgram(voronoidesign_program);
+            glUniform1f(voronoidesign_iTime_location, t-82.76);
+            glUniform2f(voronoidesign_iResolution_location, w, h);
+        }
+        else if(t < t_end)
         {
             glUseProgram(bloodcells_program);
-            glUniform1f(bloodcells_iTime_location, t-30.);
+            glUniform1f(bloodcells_iTime_location, t-99.31);
             glUniform2f(bloodcells_iResolution_location, w, h);
         }
-
         else ExitProcess(0);
     }
     quad();
@@ -436,12 +435,6 @@ void draw()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, font_texture_size, font_texture_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     
     quad();
-    
-    // Render second pass (Post processing) to screen
-//     glClear(GL_COLOR_BUFFER_BIT);
-//     glViewport(0,0,w,h);
-    
-    
     
     glBindTexture(GL_TEXTURE_2D, 0);
 }

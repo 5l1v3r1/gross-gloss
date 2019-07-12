@@ -118,10 +118,10 @@ void scene(in vec3 x, out vec2 sdf)
         float rr;
         rand(i*c.xx*1.e2,rr); 
         zextrude(x.z, -d+.5*abs(x.z), .07+.06*rr, d);
-   		 stroke(d,.02, d);
+        stroke(d,.02, d);
         smoothmin(d, da, .2, d);
     }
-    
+    d = mix(1., d, smoothstep(19., 23., iTime));
     sdf = vec2(d, 2.);
     
     add(sdf, vec2(x.z+.05,1.), sdf);
@@ -148,9 +148,10 @@ void colorize(in vec2 x, out vec3 col)
         //d = min(d, da);
         float rr;
         rand(i*c.xx*1.e2,rr); 
-   		 stroke(d,.18, d);
+        stroke(da,.18, da);
         smoothmin(d, da, .2, d);
     }
+    d = mix(1., d, smoothstep(15., 19., iTime));
     vec3 c1 = vec3(.78,.61*abs(2.*x.y),.15);
     
 //     vec3 hsv;
@@ -162,8 +163,11 @@ void colorize(in vec2 x, out vec3 col)
     
     col = mix(col, c1, sm(d));
     
-    stroke(d-.03, .03, d);
-    col = mix(col, c.yyy, sm(d));
+    if(d != 1.)
+    {
+        stroke(d-.03, .03, d);
+        col = mix(col, c.yyy, sm(d));
+    }
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -248,6 +252,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     col *= col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
+    
+    col = mix(c.yyy, col, smoothstep(0., 1., iTime));
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }

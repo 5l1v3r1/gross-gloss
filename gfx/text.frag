@@ -549,7 +549,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     stroke(b.x, .001, bd.x);
     add(b, bd, b);
     box(uv-vec2(-.08,.45)-.03*sin(iTime)*c.xy, vec2(.2,.02), bd.x);
-    bd.gba = vec3(0.60,0.06,0.00);
+    bd.gba = vec3(0.44,0.07,0.66);
     add(b, bd, b);
     stroke(bd.x, .001, bd.x);
     add(b, bd, b);
@@ -569,7 +569,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     if(iTime < 38.)
     {
-        dstring(uv+.6*c.xy, 1., .05, d); //Cream210 presents
+        dstring(uv+.6*c.xy, 1., .05, d); //Meme210 present
         stroke(d, .01, d);
         new = vec4(d, mix(old.gba, c.xxx, .6));
         blendadd(old,new,2.,8.,new);
@@ -579,44 +579,21 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         old = vec4(d, mix(old.gba, c.xxx, .6));
         blendadd(new,old,4.,8.,new);
         
-        dstring(uv+.6*c.xy+.15*c.yx, 3., .02, d); // uhm, well
+        dstring(uv+.6*c.xy+.15*c.yx, 3., .02, d); // well, shit.
         stroke(d, .005, d);
         old = vec4(d, mix(old.gba, c.xxx, .6));
         blendadd(new,old,6.,8.,new);
         
-        dstring(uv+.6*c.xy-.2*c.yx, 5., .03, d); // year 2100
+        dstring(uv+.6*c.xy, 5., .03, d); // Anyway, we present
         stroke(d, .005, d);
         old = vec4(d, mix(old.gba, c.xxx, .6));
-        blendadd(new,old,21.,29.,new);
-
-        dstring(uv+.6*c.xy-.1*c.yx, 6., .03, d); // a bar in karlsruhe
-        stroke(d, .005, d);
+        blendadd(new,old,9.,15.,new);
+    
+        dstring(uv+.6*c.xy-.15*c.yx, 6., .07, d); // GROSS GLOSS
+        stroke(d, .015, d);
         old = vec4(d, mix(old.gba, c.xxx, .6));
-        blendadd(new,old,23.,29.,new);
+        blendadd(new,old,11.,15.,new);
 
-        dstring(uv+.6*c.xy, 7., .03, d); // which you are
-        stroke(d, .005, d);
-        old = vec4(d, mix(old.gba, c.xxx, .6));
-        blendadd(new,old,25.,29.,new);
-
-        dstring(uv+.6*c.xy+.1*c.yx, 8., .03, d); //not in vited to
-        stroke(d, .005, d);
-        old = vec4(d, mix(old.gba, c.xxx, .6));
-        blendadd(new,old,26.,29.,new);
-
-        dstring(uv+.6*c.xy+.2*c.yx, 9., .03, d); // parties hard
-        stroke(d, .005, d);
-        old = vec4(d, mix(old.gba, c.xyy, .6));
-        blendadd(new,old,27.,29.,new);
-
-        dstring(uv+.6*c.xy+.1*c.yx, 10., .04, d); //I think they smoke beer inside
-        stroke(d, .01, d);
-        old = vec4(d, mix(old.gba, c.xxy, .6));
-        blendadd(new,old,34.,38.,new);
-        dstring(uv+.6*c.xy+.2*c.yx, 11., .04, d); //I think they smoke beer inside
-        stroke(d, .01, d);
-        old = vec4(d, mix(old.gba, c.xxy, .6));
-        blendadd(new,old,34.,38.,new);
     }
     else 
     {
