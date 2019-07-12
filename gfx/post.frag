@@ -24,10 +24,46 @@ uniform float iTime;
 
 out vec4 gl_FragColor;
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
+const float pi = acos(-1.);
+const vec3 c = vec3(1.,0.,-1.);
+
+float nbeats;
+float iScale;
+
+void rand(in vec2 x, out float n)
 {
+    x += 400.;
+    n = fract(sin(dot(sign(x)*abs(x) ,vec2(12.9898,78.233)))*43758.5453);
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord_ )
+{
+    vec2 fragCoord = fragCoord_;
+    float a = iResolution.x/iResolution.y;
+    vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0);
+    
     vec3 col = vec3(0.);
+    float delta = 0.;
+    vec2 n = c.yy;
+    
+    if(iTime > 66.27 && iTime < 82.76) // blend in to caleidoscope
+    {
+        n = vec2(7.,1.);
+        float phi = abs(mod(atan(uv.y, uv.x),pi/n.x)-.5*pi/n.x);
+        uv = length(uv)*vec2(cos(phi+2.*pi), sin(phi+2.*pi));
+        fragCoord = mix(fragCoord, (uv + .5*vec2(a,1.))*iResolution.yy, smoothstep(66.27,67.27,iTime)*(1.-smoothstep(81.76,82.76,iTime)));
+    }
+    else if(iTime > 120.0 && iTime < 136.0) // blend in to caleidoscope
+    {
+        n = vec2(7.,1.);
+        float phi = abs(mod(atan(uv.y, uv.x),pi/n.x)-.5*pi/n.x);
+        uv = length(uv)*vec2(cos(phi+2.*pi), sin(phi+2.*pi));
+        fragCoord = mix(fragCoord, (uv + .5*vec2(a,1.))*iResolution.yy, smoothstep(120.,121.,iTime)*(1.-smoothstep(135.,136.,iTime)));
+    }
+    
     float bound = sqrt(iFSAA)-1.;
+//     bound = mix(bound, 4., smoothstep(66.27,67.27,iTime)*(1.-smoothstep(81.76,82.76,iTime)));
+    
    	for(float i = -.5*bound; i<=.5*bound; i+=1.)
         for(float j=-.5*bound; j<=.5*bound; j+=1.)
         {

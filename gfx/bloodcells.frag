@@ -88,7 +88,7 @@ void scene(in vec3 x, out vec2 sdf)
 {    
     x.y += .3*iTime;
     float d;
-    dsmoothvoronoi(2.*x.xy,d,ind);
+    dsmoothvoronoi(mix(2.,3.,smoothstep(10.,12.,iTime))*x.xy-1337.,d,ind);
     stroke(d, .1, d);
     float modsize = .04,
 		y = mod(d-.02*iTime,modsize)-.5*modsize,
@@ -97,9 +97,9 @@ void scene(in vec3 x, out vec2 sdf)
     float n;
     lfnoise(2.*yi*c.xx-.3*iTime, n);
     
-    zextrude(x.z-.05*n, -y, .05+.05*n, d);
+    zextrude(x.z-.05*n, -y, mix(0.,.05+.05*n,iScale), d);
     
-    stroke(d,.02,d);
+    stroke(d,mix(0.,.02,iScale),d);
     
     sdf = vec2(d, 2.);
     
@@ -111,14 +111,17 @@ void normal(in vec3 x, out vec3 n, in float dx);
 void colorize(in vec2 x, out vec3 col)
 {
     col = .5*c.xxx;
-
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     a = iResolution.x/iResolution.y;
     
-    iScale = fract(iTime);
+    nbeats = mod(iTime, 60./29.);
+    iScale = nbeats-30./29.;
+    iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 15./29., iScale));
+    
+    iScale *= (1.-smoothstep(54.69, 57.69, iTime));
     
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;
@@ -184,10 +187,10 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col *= col*col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
     
-    col *= mix(c.xxx, col, iScale);
+    col *= mix(col, length(col)/sqrt(3.)*c.xxx, iScale);
 
     col = mix(c.yyy, col, smoothstep(0., 1., iTime));
-    col = mix(col, c.yyy, smoothstep(56.69, 57.69, iTime));
+    col = mix(col, c.yyy, smoothstep(54.69, 57.69, iTime));
 
     
 //     vec3 hsv;

@@ -109,8 +109,6 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     iScale = nbeats-30./29.;
     iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 5./29., iScale));
     
-    iScale = fract(iTime);
-    
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;
     vec3 col = c.yyy, 
