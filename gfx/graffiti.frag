@@ -20,12 +20,13 @@
 uniform float iTime;
 uniform vec2 iResolution;
 
+float nbeats;
+float iScale;
+
 // Global constants
 const float pi = acos(-1.);
 const vec3 c = vec3(1.0, 0.0, -1.0);
 float a = 1.0;
-
-float iScale;
 
 void hsv2rgb(in vec3 hsv, out vec3 rgb);
 void rgb2hsv(in vec3 rgb, out vec3 hsv);
@@ -118,7 +119,7 @@ void scene(in vec3 x, out vec2 sdf)
         float rr;
         rand(i*c.xx*1.e2,rr); 
         zextrude(x.z, -d+.5*abs(x.z), .07+.06*rr, d);
-        stroke(d,.02, d);
+        stroke(d,mix(.02,.04,iScale), d);
         smoothmin(d, da, .2, d);
     }
     d = mix(1., d, smoothstep(19., 23., iTime));
@@ -173,8 +174,9 @@ void colorize(in vec2 x, out vec3 col)
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     a = iResolution.x/iResolution.y;
-    
-    iScale = fract(iTime);
+    nbeats = mod(iTime, 60./29.);
+    iScale = nbeats-30./29.;
+    iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 5./29., iScale));
     
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;
@@ -254,6 +256,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
     
     col = mix(c.yyy, col, smoothstep(0., 1., iTime));
+    col = mix(col, c.xxx, smoothstep(48.655, 49.655, iTime));
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }

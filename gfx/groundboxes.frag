@@ -20,6 +20,9 @@
 uniform float iTime;
 uniform vec2 iResolution;
 
+float nbeats;
+float iScale;
+
 out vec4 gl_FragColor;
 
 // Global constants
@@ -27,7 +30,6 @@ const float pi = acos(-1.);
 const vec3 c = vec3(1.0, 0.0, -1.0);
 float a = 1.0;
 
-float iScale;
 
 void hsv2rgb(in vec3 hsv, out vec3 rgb);
 void rgb2hsv(in vec3 rgb, out vec3 hsv);
@@ -150,6 +152,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     a = iResolution.x/iResolution.y;
     
     iScale = fract(iTime);
+    nbeats = mod(iTime, 60./29.);
+    iScale = nbeats-30./29.;
+    iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 5./29., iScale));
     
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;

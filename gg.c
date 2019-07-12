@@ -363,16 +363,32 @@ void draw()
     {
         if(override_index == 1)
         {
-            glUseProgram(voronoidesign_program);
-            glUniform1f(voronoidesign_iTime_location, t);
-            glUniform2f(voronoidesign_iResolution_location, w, h);
+            glUseProgram(graffiti_program);
+            glUniform1f(graffiti_iTime_location, t);
+            glUniform2f(graffiti_iResolution_location, w, h);
         }
         else if(override_index == 2)
         {
+            t = t_now + 49.655;
             glUseProgram(groundboxes_program);
-            glUniform1f(groundboxes_iTime_location, t);
+            glUniform1f(groundboxes_iTime_location, t-49.655);
             glUniform2f(groundboxes_iResolution_location, w, h);
         }
+        else if(override_index == 3)
+        {
+            t = t_now + 82.76;
+            glUseProgram(voronoidesign_program);
+            glUniform1f(voronoidesign_iTime_location, t-82.76);
+            glUniform2f(voronoidesign_iResolution_location, w, h);
+        }
+        else if(override_index == 4)
+        {
+            t = t_now + 99.31;
+            glUseProgram(bloodcells_program);
+            glUniform1f(bloodcells_iTime_location, t-99.31);
+            glUniform2f(bloodcells_iResolution_location, w, h);
+        }
+        else ExitProcess(0);
     }
     else
     {
