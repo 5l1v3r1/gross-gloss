@@ -70,6 +70,7 @@ void load_demo()
 	post_channel0_location = glGetUniformLocation(post_program, POST_VAR_ICHANNEL0);
 	post_fsaa_location = glGetUniformLocation(post_program, POST_VAR_IFSAA);
 	post_resolution_location = glGetUniformLocation(post_program, POST_VAR_IRESOLUTION);
+    post_time_location = glGetUniformLocation(post_program, POST_VAR_ITIME);
 	printf("++++ Post shader created.\n");
 
 	// Create framebuffer for rendering first pass to
@@ -338,6 +339,7 @@ void updateBar()
     glUniform2f(post_resolution_location, w, h);
     glUniform1f(post_fsaa_location, fsaa);
     glUniform1i(post_channel0_location, 0);
+    glUniform1f(post_time_location, 0.);
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, first_pass_texture);
@@ -425,6 +427,7 @@ void draw()
     glUniform2f(post_resolution_location, w, h);
     glUniform1f(post_fsaa_location, fsaa);
     glUniform1i(post_channel0_location, 0);
+    glUniform1f(post_time_location, t);
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, first_pass_texture);

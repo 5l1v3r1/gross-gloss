@@ -20,6 +20,7 @@
 uniform float iFSAA;
 uniform vec2 iResolution;
 uniform sampler2D iChannel0;
+uniform float iTime;
 
 out vec4 gl_FragColor;
 

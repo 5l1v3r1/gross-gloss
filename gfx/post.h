@@ -24,6 +24,7 @@ const char * post_frag =
 "uniform float iFSAA;\n"
 "uniform vec2 iResolution;\n"
 "uniform sampler2D iChannel0;\n"
+"uniform float iTime;\n"
 "\n"
 "out vec4 gl_FragColor;\n"
 "\n"

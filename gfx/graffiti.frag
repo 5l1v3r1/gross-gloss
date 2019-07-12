@@ -20,7 +20,7 @@
 uniform float iTime;
 uniform vec2 iResolution;
 
-float nbeats;
+float nbeats;
 float iScale;
 
 // Global constants
@@ -176,7 +176,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     a = iResolution.x/iResolution.y;
     nbeats = mod(iTime, 60./29.);
     iScale = nbeats-30./29.;
-    iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 5./29., iScale));
+    iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 15./29., iScale));
     
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;
@@ -188,7 +188,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         dir,
         n,
         x;
-    int N = 100,
+    int N = 150,
         i;
     t = uv.x * r + uv.y * u;
     dir = normalize(t-o);
@@ -256,7 +256,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
     
     col = mix(c.yyy, col, smoothstep(0., 1., iTime));
-    col = mix(col, c.xxx, smoothstep(48.655, 49.655, iTime));
+    col = mix(col, c.yyy, smoothstep(48.655, 49.655, iTime));
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }

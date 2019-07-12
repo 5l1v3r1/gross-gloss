@@ -567,7 +567,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     vec4 bda;
     
-    if(iTime < 38.)
+    if(iTime < 49.655)
     {
         dstring(uv+.6*c.xy, 1., .05, d); //Meme210 present
         stroke(d, .01, d);
@@ -593,6 +593,26 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         stroke(d, .015, d);
         old = vec4(d, mix(old.gba, c.xxx, .6));
         blendadd(new,old,11.,15.,new);
+
+        dstring(uv+.6*c.xy-.35*c.yx, 7., .03, d); // QM
+        stroke(d, .005, d);
+        old = vec4(d, mix(old.gba, c.xxx, .6));
+        blendadd(new,old,30.,37.,new);
+
+        dstring(uv+.3*c.xy-.35*c.yx, 8., .03, d); // NR4
+        stroke(d, .005, d);
+        old = vec4(d, mix(old.gba, c.xxx, .6));
+        blendadd(new,old,31.,38.,new);
+
+        dstring(uv+.0*c.xy-.35*c.yx, 9., .03, d); // MIC
+        stroke(d, .005, d);
+        old = vec4(d, mix(old.gba, c.xxx, .6));
+        blendadd(new,old,32.,39.,new);
+
+        dstring(uv-.3*c.xy-.35*c.yx, 10., .03, d); // grenzdevil
+        stroke(d, .005, d);
+        old = vec4(d, mix(old.gba, c.xxx, .6));
+        blendadd(new,old,33.,40.,new);
 
     }
     else 

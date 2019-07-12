@@ -136,6 +136,7 @@ post_program,
 post_resolution_location,
 post_fsaa_location,
 post_channel0_location,
+post_time_location,
 
 // Antialiasing
 fsaa = 25,
@@ -232,6 +233,7 @@ void draw();
 #define POST_VAR_IFSAA "iFSAA"
 #define POST_VAR_IRESOLUTION "iResolution"
 #define POST_VAR_ICHANNEL0 "iChannel0"
+#define POST_VAR_ITIME "iTime"
 
 #include "gfx/symbols.h"
 

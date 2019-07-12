@@ -20,8 +20,10 @@
 uniform float iTime;
 uniform vec2 iResolution;
 
-float nbeats;
+
+float nbeats;
 float iScale;
+float smoothdis;
 
 out vec4 gl_FragColor;
 
@@ -45,7 +47,7 @@ void add(in vec2 sda, in vec2 sdb, out vec2 sdf);
 vec2 ind;
 void scene(in vec3 x, out vec2 sdf)
 {
-    x.y += .3*iTime;
+    x.y += mix(1.,1.01,iScale)*iTime;
     mat2 R = mat2(cos(pi/4.), sin(pi/4.), -sin(pi/4.), cos(pi/4.));
     x.xy = R*x.xy;
     
@@ -68,7 +70,7 @@ void scene(in vec3 x, out vec2 sdf)
     {
         float r2;
         rand(ind-1337., r2);
-        r2 = 1.;
+        r2 = .5+.5*iScale;
         dbox(x2, .5*size*c.xx, d);
         zextrude(x.z, -d-.02, .3*(r-.7)/.3*r2, d);
         stroke(d, .001, d);
@@ -84,7 +86,7 @@ float sm(float d)
 
 void colorize(in vec2 x, out vec3 col)
 {
-    x.y += .3*iTime;
+    x.y += mix(1.,1.01,iScale)*iTime;
     mat2 R = mat2(cos(pi/4.), sin(pi/4.), -sin(pi/4.), cos(pi/4.));
     x.xy = R*x.xy;
     
@@ -151,10 +153,18 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     a = iResolution.x/iResolution.y;
     
-    iScale = fract(iTime);
-    nbeats = mod(iTime, 60./29.);
-    iScale = nbeats-30./29.;
+    nbeats = mod(iTime-30./29./4., 60./29./4.);
+    iScale = nbeats-30./29./4.;
     iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 5./29., iScale));
+    
+    vec3 ra = vec3(nbeats-60./29./4., nbeats, nbeats+60./29./4.);
+    rand(ra.x*c.xx, ra.x);
+    rand(ra.y*c.xx, ra.y);
+    rand(ra.z*c.xx, ra.z);
+    smoothdis = mix(
+                    mix(ra.x,ra.y, smoothstep(0.,.5,(iTime-nbeats)/(60./29./4.))),
+                    ra.z,
+                    smoothstep(.5,1.,(iTime-nbeats)/(60./29./4.)));
     
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;
@@ -256,6 +266,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     }
     col += col;
     col *= col;
+    col *= mix(c.xxx, col, iScale);
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }

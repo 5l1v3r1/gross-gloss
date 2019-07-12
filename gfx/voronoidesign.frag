@@ -20,12 +20,13 @@
 uniform float iTime;
 uniform vec2 iResolution;
 
+float nbeats;
+float iScale;
+
 // Global constants
 const float pi = acos(-1.);
 const vec3 c = vec3(1.0, 0.0, -1.0);
 float a = 1.0;
-
-float iScale;
 
 void hsv2rgb(in vec3 hsv, out vec3 rgb);
 void rgb2hsv(in vec3 rgb, out vec3 hsv);
@@ -104,6 +105,9 @@ void colorize(in vec2 x, out vec3 col)
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     a = iResolution.x/iResolution.y;
+    nbeats = mod(iTime, 60./29.);
+    iScale = nbeats-30./29.;
+    iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 5./29., iScale));
     
     iScale = fract(iTime);
     
@@ -180,6 +184,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     col *= col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
+    
+//    col *= mix(c.xxx, 2.*c.xxx, iScale);
+    col = mix(col, length(col)/1.732*c.xxx, .5*iScale);
+
+    col = mix(c.yyy, col, smoothstep(0., 1., iTime));
+    col = mix(col, c.yyy, smoothstep(15.55, 16.55, iTime));
+    
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }	
