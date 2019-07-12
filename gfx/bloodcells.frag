@@ -121,7 +121,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     iScale = nbeats-30./29.;
     iScale = smoothstep(-5./29., 0., iScale)*(1.-smoothstep(0., 15./29., iScale));
     
-    iScale *= (1.-smoothstep(54.69, 57.69, iTime));
+    iScale *= (1.-smoothstep(51., 52., iTime));
     
     vec2 uv = fragCoord/iResolution.yy-0.5*vec2(a, 1.0), 
         s;
@@ -182,25 +182,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         }
     }
     
-    //col += col;
-    
     col *= col*col;
     col = mix(col, c.yyy, clamp((d-2.-(o.z-.2)/dir.z)/4.,0.,1.));
     
     col *= mix(col, length(col)/sqrt(3.)*c.xxx, iScale);
 
     col = mix(c.yyy, col, smoothstep(0., 1., iTime));
-    col = mix(col, c.yyy, smoothstep(54.69, 57.69, iTime));
-
-    
-//     vec3 hsv;
-//     rgb2hsv(col, hsv);
-//     float na;
-//     lfnoise(x.xy-iTime+4.*hsv.x, na);
-//     hsv.x = mod(1.*hsv.x+.2*na+iTime, 2.*pi);
-//     hsv2rgb(hsv, col);
-    
-//     col = tanh(col);
+    col = mix(col, c.yyy, smoothstep(53.69, 54.69, iTime));
     
     fragColor = vec4(clamp(col,0.,1.),1.0);
 }

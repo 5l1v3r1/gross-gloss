@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#define DEBUG
-
 const char *demoname = "Gross Gloss/Team210";
 unsigned int muted = 0.;
 

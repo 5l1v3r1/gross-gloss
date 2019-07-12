@@ -64,12 +64,24 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord_ )
     float bound = sqrt(iFSAA)-1.;
 //     bound = mix(bound, 4., smoothstep(66.27,67.27,iTime)*(1.-smoothstep(81.76,82.76,iTime)));
     
-   	for(float i = -.5*bound; i<=.5*bound; i+=1.)
-        for(float j=-.5*bound; j<=.5*bound; j+=1.)
-        {
-     		col += texture(iChannel0, fragCoord/iResolution.xy+vec2(i,j)*mix(3.,15.,2.*abs(fragCoord.y/iResolution.y-.5))*exp(-abs(1.e-2*length(fragCoord.xy)/iResolution.y-.5))/max(bound, 1.)/iResolution.xy).xyz;
-        }
-    col /= iFSAA;
+    if((iTime > 66.27 && iTime < 82.76) || (iTime > 120.0 && iTime < 136.0))
+    {
+        for(float i = -.5*bound; i<=.5*bound; i+=1.)
+            for(float j=-.5*bound; j<=.5*bound; j+=1.)
+            {
+                col += texture(iChannel0, fragCoord/iResolution.xy+vec2(i,j)*3./max(bound, 1.)/iResolution.xy).xyz;
+            }
+        col /= iFSAA;
+    }
+    else
+    {
+        for(float i = -.5*bound; i<=.5*bound; i+=1.)
+            for(float j=-.5*bound; j<=.5*bound; j+=1.)
+            {
+                col += texture(iChannel0, fragCoord/iResolution.xy+vec2(i,j)*mix(3.,15.,2.*abs(fragCoord.y/iResolution.y-.5))*exp(-abs(1.e-2*length(fragCoord.xy)/iResolution.y-.5))/max(bound, 1.)/iResolution.xy).xyz;
+            }
+        col /= iFSAA;
+    }
     fragColor = vec4(col,1.0);
 }
 
