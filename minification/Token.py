@@ -1,5 +1,5 @@
-# Tunguska by Team210 - 64k intro by Team210 at Solskogen 2k19
-# Copyright (C) 2018  Alexander Kraus <nr4@z10.info>
+# Hardcyber - PC-64k-Intro by Team210 at Deadline 2k19
+# Copyright (C) 2019  Alexander Kraus <nr4@z10.info>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

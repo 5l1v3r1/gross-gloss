@@ -1,7 +1,29 @@
+/* Hardcyber - PC-64k-Intro by Team210 at Deadline 2k19
+ * Copyright (C) 2019 DaDummy <c.anselm@paindevs.com>
+ * Copyright (C) 2019 Alexander Kraus <nr4@z10.info>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #ifndef PAL_WIN32_H
 #define PAL_WIN32_H
 
 #include "common.h"
+
+#ifdef DEBUG
+#include "engine/debug.h"
+#endif 
 
 void *malloc(size_t size)
 {
@@ -13,6 +35,14 @@ WAVEHDR header = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 HDC hdc;
 HGLRC glrc;
+
+#ifdef RECORD
+HWND hRecordFilenameEdit, hCaptureWindow, hCaptureDriverComboBox ;
+#endif 
+
+double get_sound_playback_time();
+void set_sound_playback_time(double time);
+void set_sound_playback_range(double time_begin, double time_end);
 
 int flip_buffers()
 {
@@ -39,6 +69,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch(wParam)
 			{
 				case VK_ESCAPE:
+#ifdef RECORD
+                    if(recording) 
+                    {
+                        capFileSaveAs(hCaptureWindow, record_filename);
+                    }
+#endif
 					ExitProcess(0);
 					break;
 				case VK_SPACE:
@@ -49,15 +85,24 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					else
 						waveOutRestart(hWaveOut);
 					break;
+#ifdef DEBUG
+                case VK_RETURN:
+                    showDebugWindow = !showDebugWindow;
+                    break;
+#endif
+                    
 			}
 			break;
 		case WM_RBUTTONDOWN:
+#ifdef RECORD
+            if(recording) capFileSaveAs(hCaptureWindow, record_filename);
+#endif
 			ExitProcess(0);
 			break;
-        case WM_MOUSEMOVE:
-            mx = GET_X_LPARAM(lParam);
-            my = GET_Y_LPARAM(lParam);
-            break;
+//         case WM_MOUSEMOVE:
+//             mx = GET_X_LPARAM(lParam);
+//             my = GET_Y_LPARAM(lParam);
+//             break;
 
 		default:
 			break;
@@ -78,41 +123,29 @@ LRESULT CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				case 5:
 				{
-					int index = SendMessage(hSender, CB_GETCURSEL, 0, 0);
-					if(index == 0)
-					{
-						w = 1920;
-						h = 1080;
-					}
-					else if(index == 1)
-					{
-						w = 960;
-						h = 540;
-					}
-					else if(index == 2)
-					{
-						w = 1024;
-						h = 768;
-					}
+					selectedIndex = SendMessage(hSender, CB_GETCURSEL, 0, 0);
 				}
-					break;
+                break;
 				case 6:
 					muted = !muted;
 					if(muted)
 						SendMessage(hSender, BM_SETCHECK, BST_CHECKED, 0);
 					else
 						SendMessage(hSender, BM_SETCHECK, BST_UNCHECKED, 0);
-					break;
+                break;
 				case 7:
+#ifdef RECORD
+                    GetWindowText(hRecordFilenameEdit, record_filename, 1024);
+#endif
 					DestroyWindow(hwnd);
 					PostQuitMessage(0);
-					break;
+                break;
 				case 8: // Full screen Antialiasing
 				{
 					int index = SendMessage(hSender, CB_GETCURSEL, 0, 0);
 					fsaa = (index + 1)*(index + 1);
 				}
-					break;
+                break;
 				case 9: // Texture buffer size
 				{
 					int index = SendMessage(hSender, CB_GETCURSEL, 0, 0);
@@ -121,13 +154,31 @@ LRESULT CALLBACK DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						texs *= 2;
 					block_size = texs*texs;
 				}
-					break;
+                break;
 				case 10:
 				{
-					override_index = SendMessage(hSender, CB_GETCURSEL, 0, 0);
-					scene_override = override_index > 0;
+                    start_at_scene = SendMessage(hSender, CB_GETCURSEL, 0, 0);
 				}
 				break;
+#ifdef RECORDING
+                case 11:
+                {
+                    recording = !recording;
+					if(recording)
+                    {
+						SendMessage(hSender, BM_SETCHECK, BST_CHECKED, 0);
+                        EnableWindow(hRecordFilenameEdit, TRUE);
+                        EnableWindow(hCaptureDriverComboBox, TRUE);
+                    }
+                    else
+                    {
+						SendMessage(hSender, BM_SETCHECK, BST_UNCHECKED, 0);
+                        EnableWindow(hRecordFilenameEdit, FALSE);
+                        EnableWindow(hCaptureDriverComboBox, FALSE);
+                    }
+                }
+				break;
+#endif
 			}
 			break;
 
@@ -146,7 +197,50 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
 #endif
-
+    
+    // Determine supported display device modes
+    DEVMODE dm = { 0 };
+    dm.dmSize = sizeof(dm);
+    
+    // Get number of supported device modes
+    for(nresolutions = 0; EnumDisplaySettings(NULL, nresolutions, &dm) != 0; ++nresolutions);
+    
+    // Allocate arrays
+    widths = (int*) malloc(nresolutions * sizeof(int));
+    heights = (int*) malloc(nresolutions * sizeof(int));
+    rates = (int*)malloc(nresolutions * sizeof(int));
+    
+    // Fill arrays
+    for(int i = 0; i < nresolutions; ++i) 
+    {
+        EnumDisplaySettings(NULL, i, &dm);
+        
+        // Check if settings are already in list
+        int isInList = 0;
+        for(int k = 0; k < i; ++k)
+        {
+            if(widths[k] == dm.dmPelsWidth && heights[k] == dm.dmPelsHeight && rates[k] == dm.dmDisplayFrequency)
+            {
+                isInList = 1;
+                break;
+            }
+        }
+        
+        // Add to list if not present
+        if(!isInList)
+        {
+            widths[nuniqueresolutions] = dm.dmPelsWidth;
+            heights[nuniqueresolutions] = dm.dmPelsHeight;
+            rates[nuniqueresolutions] = dm.dmDisplayFrequency;
+            
+            // Mark default (720p)
+            if(dm.dmPelsWidth == 1280 && dm.dmPelsHeight == 720 && dm.dmDisplayFrequency == 60)     
+                selectedIndex = nuniqueresolutions;
+            
+            ++nuniqueresolutions;
+        }
+    }
+    
 	// Display settings selector
 	WNDCLASS wca = { 0 };
 	wca.lpfnWndProc   = DialogProc;
@@ -160,7 +254,7 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 		WS_OVERLAPPEDWINDOW,            // Window style
 
 		// Size and position
-		200, 200, 300, 300,
+		200, 200, 300, 360,
 
 		NULL,       // Parent window
 		NULL,       // Menu
@@ -174,17 +268,17 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 	// Add resolution Combo box
 	HWND hResolutionComboBox = CreateWindow(WC_COMBOBOX, TEXT(""),
 	 CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-	 100, 10, 175, 80, lwnd, (HMENU)5, hInstance,
+	 100, 10, 175, nuniqueresolutions*15, lwnd, (HMENU)5, hInstance,
 	 NULL);
 
 	// Add items to resolution combo box and select full HD
-	const char *fullhd = "1920*1080",
-		*halfhd = "960*540",
-		*normal = "1024*768";
-	SendMessage(hResolutionComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fullhd));
-	SendMessage(hResolutionComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (halfhd));
-	SendMessage(hResolutionComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (normal));
-	SendMessage(hResolutionComboBox, CB_SETCURSEL, 0, 0);
+    for(int i=0; i<nuniqueresolutions; ++i)
+    {
+        char name[1024];
+        sprintf(name, "%d x %d @ %d Hz", widths[i], heights[i], rates[i]);
+        SendMessage(hResolutionComboBox, (UINT) CB_ADDSTRING, (WPARAM) 0, (LPARAM) name);
+    }
+	SendMessage(hResolutionComboBox, CB_SETCURSEL, selectedIndex, 0);
 
 	// Add mute checkbox
 	HWND hMuteCheckbox = CreateWindow(WC_BUTTON, TEXT("Mute"),
@@ -200,49 +294,25 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 	 CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
 	 100, 60, 175, 280, lwnd, (HMENU)8, hInstance,
 	 NULL);
-
-	// Populate with entries
-	const char *fsaa1= "None",
-		*fsaa4 = "4*FSAA",
-		*fsaa9 = "9*FSAA",
-		*fsaa16 = "16*FSAA",
-		*fsaa25 = "25*FSAA",
-        *fsaa36 = "36*FSAA",
-        *fsaa49 = "49*FSAA",
-        *fsaa64 = "64*FSAA",
-        *fsaa81 = "81*FSAA",
-        *fsaa100 = "100*FSAA";
-	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa1));
-	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa4));
-	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa9));
-	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa16));
-	SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa25));
-    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa36));
-    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa49));
-    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa64));
-    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa81));
-    SendMessage(hFSAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (fsaa100));
-	SendMessage(hFSAAComboBox, CB_SETCURSEL, 9, 0);
+    
+    // Populate with entries
+    for(int i=0; i<nfsaa; ++i)
+        SendMessage(hFSAAComboBox, (UINT) CB_ADDSTRING, (WPARAM) 0, (LPARAM) fsaa_names[i]);
+	SendMessage(hFSAAComboBox, CB_SETCURSEL, nfsaa-1, 0);
+    fsaa = nfsaa*nfsaa;
 
 	// Add "SFX Buffer: " text
 	HWND hTXAAText = CreateWindow(WC_STATIC, "SFX Buffer: ", WS_VISIBLE | WS_CHILD | SS_LEFT, 10,95,100,100, lwnd, NULL, hInstance, NULL);
 
 	// Add SFX buffer size combo box
-	HWND hTXAAComboBox= CreateWindow(WC_COMBOBOX, TEXT(""),
+	HWND hTXAAComboBox = CreateWindow(WC_COMBOBOX, TEXT(""),
 	 CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
 	 100, 90, 175, 280, lwnd, (HMENU)9, hInstance,
 	 NULL);
 
 	// Populate with entries
-	const char *buf128= "128^2 px",
-		*buf256 = "256^2 px",
-		*buf512 = "512^2 px",
-		*buf1024 = "1024^2 px";
-	SendMessage(hTXAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (buf128));
-	SendMessage(hTXAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (buf256));
-	SendMessage(hTXAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (buf512));
-	SendMessage(hTXAAComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (buf1024));
-	//SendMessage(hTXAAComboBox, CB_SETCURSEL, 3, 0);
+    for(int i=0; i<4; ++i)
+        SendMessage(hTXAAComboBox, (UINT) CB_ADDSTRING, (WPARAM) 0, (LPARAM) buffersize_names[i]);
 	SendMessage(hTXAAComboBox, CB_SETCURSEL, 2, 0);
 
 	// Add "Antialiasing: " text
@@ -251,25 +321,53 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 	// Add scene selector
 	HWND hSceneComboBox = CreateWindow(WC_COMBOBOX, TEXT(""),
 	 CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-	 100, 120, 175, 280, lwnd, (HMENU)10, hInstance,
+	 100, 120, 175, 680, lwnd, (HMENU)10, hInstance,
 	 NULL);
 
-	// Populate with entries
-	const char *all_scenes = "All scenes",
-		*graffiti_scene = "Graffiti",
-        *block_scene = "Transparent Blocks",
-        *voronoi_scene = "Voronoi Canyon",
-        *blood_cell_scene = "Blood Cells";
-	SendMessage(hSceneComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (all_scenes));
-	SendMessage(hSceneComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (graffiti_scene));
-	SendMessage(hSceneComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (block_scene));
-	SendMessage(hSceneComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (voronoi_scene));
-	SendMessage(hSceneComboBox,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) (blood_cell_scene));
+    // Populate with entries
+    for(int i=0; i<nscenes; ++i)
+        SendMessage(hSceneComboBox, (UINT) CB_ADDSTRING, (WPARAM) 0, (LPARAM) scene_names[i]);
 	SendMessage(hSceneComboBox, CB_SETCURSEL, 0, 0);
 
 	// Add start button
-	HWND hwndButton = CreateWindow(WC_BUTTON,"Party!",WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,185,165,90,90,lwnd,(HMENU)7,hInstance,NULL);
+	HWND hwndButton = CreateWindow(WC_BUTTON,"Offend!",WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,185,225,90,90,lwnd,(HMENU)7,hInstance,NULL);
 
+#ifdef RECORD
+    // Add record checkbox
+	HWND hRecordCheckbox = CreateWindow(WC_BUTTON, TEXT("Record"),
+					 WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
+					 10, 150, 89, 20,
+					 lwnd, (HMENU) 11, hInstance, NULL);
+    
+    // Add record filename text field
+    hRecordFilenameEdit = CreateWindow(WC_EDIT, TEXT("lightcyber.avi"), WS_VISIBLE | WS_CHILD | WS_BORDER ,100,150 ,175,25,lwnd, (HMENU) 12,NULL,NULL );
+    EnableWindow(hRecordFilenameEdit, FALSE);
+    
+    // Add capture driver selector
+	hCaptureDriverComboBox = CreateWindow(WC_COMBOBOX, TEXT(""),
+        CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
+        100, 180, 175, 680, lwnd, (HMENU)12, hInstance,
+        NULL);
+    char capture_device_name[80];
+    char capture_device_version[80];
+
+    for(int wIndex = 0; wIndex < 10; wIndex++) 
+    {
+        if (capGetDriverDescription(
+                wIndex, 
+                capture_device_name, 
+                sizeof (capture_device_name), 
+                capture_device_version, 
+                sizeof (capture_device_version)
+            )) 
+        {
+            SendMessage(hCaptureDriverComboBox, (UINT) CB_ADDSTRING, (WPARAM) 0, (LPARAM) capture_device_name);
+        }
+    } 
+    SendMessage(hCaptureDriverComboBox, CB_SETCURSEL, 0, 0);
+    EnableWindow(hCaptureDriverComboBox, FALSE);
+#endif
+    
 	// Show the selector
 	ShowWindow(lwnd, TRUE);
 	UpdateWindow(lwnd);
@@ -281,12 +379,21 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 		DispatchMessage(&msg);
 	}
 
+#if RECORDING
+	if(recording)
+    {
+        // FIXME: add actually selected driver
+        SendMessage (hCaptureWindow, WM_CAP_DRIVER_CONNECT, 0, 0L); 
+    }
+#endif
+
 #ifdef DEBUG
 	printf("Rendering Demo with:\nSound ");
-//     if(muted)printf("muted");
-//     else printf("playing");
+    if(muted)printf("muted");
+    else printf("playing");
 	printf("\nResolution: %d * %d\n", w, h);
 	printf("FSAA: %d*\n", fsaa);
+    if(recording)printf("recording to %s\n", record_filename);
 #endif
 
 	// Display demo window
@@ -308,28 +415,51 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 
 	RegisterClassEx(&wc);
 
-	// Get full screen information
-	HMONITOR hmon = MonitorFromWindow(0, MONITOR_DEFAULTTONEAREST);
-	MONITORINFO mi = { sizeof(mi) };
-	GetMonitorInfo(hmon, &mi);
-
+    w = widths[selectedIndex];
+    h = heights[selectedIndex];
+    
 	// Create the window.
-	HWND hwnd = CreateWindowEx(
-		0,                                                          // Optional window styles.
-		WindowClass,                                                // Window class
-		":: NR4^QM/Team210 :: GO - MAKE A DEMO ::",                                 // Window text
-		WS_POPUP | WS_VISIBLE,                                      // Window style
-		mi.rcMonitor.left,
-		mi.rcMonitor.top,
-		mi.rcMonitor.right - mi.rcMonitor.left,
-		mi.rcMonitor.bottom - mi.rcMonitor.top,                     // Size and position
+    HWND hwnd = CreateWindowEx(
+            0,                                                          // Optional window styles.
+            WindowClass,                                                // Window class
+            ":: Team210 :: GO - MAKE A DEMO ::",                                 // Window text
+            WS_POPUP | WS_VISIBLE,                                      // Window style
+            0,
+            0,
+            w,
+            h,                     // Size and position
 
-		NULL,                                                       // Parent window
-		NULL,                                                       // Menu
-		hInstance,                                                  // Instance handle
-		0                                                           // Additional application data
-	);
-
+            NULL,                                                       // Parent window
+            NULL,                                                       // Menu
+            hInstance,                                                  // Instance handle
+            0                                                           // Additional application data
+        );
+#ifdef RECORD
+    if(recording)
+    {
+        hCaptureWindow = capCreateCaptureWindow(
+            WindowClass,
+            WS_CHILD | WS_VISIBLE,
+            0,
+            0,
+            w,
+            h,
+            hwnd,
+            0                     
+        );
+        capCaptureSequence(hCaptureWindow); 
+    }
+#endif
+    
+    DEVMODE dma = { 0 };
+    dma.dmSize = sizeof(dm);
+    dma.dmPelsWidth = widths[selectedIndex];
+    dma.dmPelsHeight = heights[selectedIndex];
+    dma.dmDisplayFrequency = rates[selectedIndex];
+    dma.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+    
+    ChangeDisplaySettings(&dma, CDS_FULLSCREEN);
+    
 	// Show it
 	ShowWindow(hwnd, TRUE);
 	UpdateWindow(hwnd);
@@ -363,42 +493,35 @@ int WINAPI demo(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 	glrc = wglCreateContext(hdc);
 	wglMakeCurrent(hdc, glrc);
 
-	// OpenGL extensions
-	glGetProgramiv = (PFNGLGETPROGRAMIVPROC) wglGetProcAddress("glGetProgramiv");
-	glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC) wglGetProcAddress("glGetProgramInfoLog");
-	glGetShaderiv = (PFNGLGETSHADERIVPROC) wglGetProcAddress("glGetShaderiv");
-	glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC) wglGetProcAddress("glGetShaderInfoLog");
-	glCreateShader = (PFNGLCREATESHADERPROC) wglGetProcAddress("glCreateShader");
-	glCreateProgram = (PFNGLCREATEPROGRAMPROC) wglGetProcAddress("glCreateProgram");
-	glShaderSource = (PFNGLSHADERSOURCEPROC) wglGetProcAddress("glShaderSource");
-	glCompileShader = (PFNGLCOMPILESHADERPROC) wglGetProcAddress("glCompileShader");
-	glAttachShader = (PFNGLATTACHSHADERPROC) wglGetProcAddress("glAttachShader");
-	glLinkProgram = (PFNGLLINKPROGRAMPROC) wglGetProcAddress("glLinkProgram");
-	glUseProgram = (PFNGLUSEPROGRAMPROC) wglGetProcAddress("glUseProgram");
-	glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC) wglGetProcAddress("glGetUniformLocation");
-	glUniform2f = (PFNGLUNIFORM2FPROC) wglGetProcAddress("glUniform2f");
-	glUniform1f = (PFNGLUNIFORM1FPROC) wglGetProcAddress("glUniform1f");
-	glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffers");
-	glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) wglGetProcAddress("glBindFramebuffer");
-	glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC) wglGetProcAddress("glFramebufferTexture2D");
-	glNamedRenderbufferStorageEXT = (PFNGLNAMEDRENDERBUFFERSTORAGEEXTPROC) wglGetProcAddress("glNamedRenderbufferStorage");
-	glActiveTexture = (PFNGLACTIVETEXTUREPROC) wglGetProcAddress("glActiveTexture");
-	glUniform1i = (PFNGLUNIFORM1IPROC) wglGetProcAddress("glUniform1i");
+    rInitializeRenderer();
 
+    ShowCursor(FALSE);
+    
 	load_demo();
 
-	// Main loop
-	t_start = 0.;
-	while(flip_buffers())
+    jump_to_scene(start_at_scene);
+
+    // Main loop
+    while(flip_buffers())
 	{
-		static MMTIME MMTime = { TIME_SAMPLES, 0};
-		waveOutGetPosition(hWaveOut, &MMTime, sizeof(MMTIME));
-		t_now = ((double)MMTime.u.sample)/( 44100.0);
+        t_now = get_sound_playback_time();
 
 		draw();
 	}
 
 	return 0;
+}
+
+void jump_to_scene(unsigned int scene_index)
+{
+    if (scene_index < nscenes)
+    {
+        set_sound_playback_range(start_times[scene_index], duration);
+    }
+    else
+    {
+        printf("Midi scene override failed - index out of bounds: %d", scene_index);
+    }
 }
 
 void initialize_sound()
@@ -408,10 +531,33 @@ void initialize_sound()
 	WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, channels, sample_rate, sample_rate*channels*n_bits_per_sample / 8, channels*n_bits_per_sample / 8, n_bits_per_sample, 0 };
 	waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL);
 
-	header.lpData = smusic1;
-	header.dwBufferLength = 4 * music1_size;
-	waveOutPrepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
-	waveOutWrite(hWaveOut, &header, sizeof(WAVEHDR));
+    t_start = t_now = 0.;
+    t_end = duration;
+}
+
+double get_sound_playback_time()
+{
+    static MMTIME MMTime = { TIME_SAMPLES, 0};
+    waveOutGetPosition(hWaveOut, &MMTime, sizeof(MMTIME));
+    return t_start + ((double)MMTime.u.sample) / 44100.0;
+}
+
+void set_sound_playback_time(double time_begin)
+{
+    set_sound_playback_range(time_begin, t_end);
+}
+
+void set_sound_playback_range(double time_begin, double time_end)
+{
+    waveOutReset(hWaveOut);
+
+    t_start = time_begin;
+    t_end = time_end;
+    int delta = clamp((int)(t_start * (double)sample_rate), 0, music1_size-1);
+    header.lpData = smusic1 + delta;
+    header.dwBufferLength = 4 * (music1_size-delta);
+    waveOutPrepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
+    waveOutWrite(hWaveOut, &header, sizeof(WAVEHDR));
 }
 
 #endif

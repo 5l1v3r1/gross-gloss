@@ -1,85 +1,155 @@
-# Gross Gloss - 64k Intro by Team210 at Solskogen 2k19
-# Copyright (C) 2018  Alexander Kraus <nr4@z10.info>
-# 
+# Providence - PC-64k-Intro by Team210 at Vortex 2k19
+# Copyright (C) 2019 Alexander Kraus <nr4@z10.info>
+# Copyright (C) 2019 DaDummy <c.anselm@paindevs.com>
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 
-project(gross-gloss)
+project(demo)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CTRL_ALT_TEST_MINIFIER OFF)
+
+# Configurables
+set(MINIFY_64K ON CACHE BOOL "Compress the executable using kkrunchy7 (disables hybrid graphics dGPU exports)")
+
+# Tell CMake to run qt tools when necessary (For Qt5 GUIs among other things)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 # Find the right python interpreter version
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(OpenGL REQUIRED COMPONENTS OpenGL)
+find_package(Qt5 COMPONENTS Widgets)
 
-if(MSVC AND ${CTRL_ALT_TEST_MINIFIER})
-    find_program(MINIFIER shader_minifier.exe HINTS ${PROJECT_BINARY_DIR})
-    add_custom_target(minification
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    )
-else()
-    add_custom_target(minification
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/minification/
-        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py  -o "${PROJECT_SOURCE_DIR}/sfx.h" "${PROJECT_SOURCE_DIR}/sfx.frag" --no-minification
-        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/load.h" "${PROJECT_SOURCE_DIR}/gfx/load.frag" --no-minification
-        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/post.h" "${PROJECT_SOURCE_DIR}/gfx/post.frag" --no-minification
-        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/ui.h" "${PROJECT_SOURCE_DIR}/gfx/ui.frag" --no-minification
-        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/logo210.h" "${PROJECT_SOURCE_DIR}/gfx/logo210.frag" --no-minification
-        
-#         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/decayingfactory.h" "${PROJECT_SOURCE_DIR}/gfx/decayingfactory.frag" --no-minification
-        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/text.h" "${PROJECT_SOURCE_DIR}/gfx/text.frag" --no-minification
-    )
-endif()
+# Add target for generators
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/generator/generator.py" "${PROJECT_SOURCE_DIR}/config/demo.json"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+)
+include(config.gen.cmake)
 
+set(COMMON_HEADERS config_types.h config.h glext.h engine/platform.h engine/renderer.h engine/shader.h engine/loader.h engine/orchestrator.h engine/midi.h engine/debug.h)
+set(SFX_SHADER sfx.frag)
+set(SHADER_SYMBOLS_PATH gfx/symbols/)
+set(STRINGS_FILE font/strings.txt)
+
+
+#################################
+# Demo executable
+#################################
+
+set(DEMO_HEADERS common.h draw.gen.h scenes.gen.h common.gen.h pal_linux.h pal_win32.h sequence.h)
+
+set(SFX_HEADER sfx.h)
+add_custom_target(minify_sfx
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/minification/
+    COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/${SFX_HEADER}" "${PROJECT_SOURCE_DIR}/${SFX_SHADER}" --no-minification
+    SOURCES minification/shader-compressor.py ${SFX_SHADER}
+    BYPRODUCTS ${SFX_HEADER}
+)
+
+set(SHADER_HEADER shaders.gen.h)
+add_custom_target(minify_shaders
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/
+    COMMAND "${Python3_EXECUTABLE}" minification/symbolize.py ${SHADER_FILES} -s ${SHADER_SYMBOLS_PATH} -o ${SHADER_HEADER}
+    SOURCES minification/symbolize.py minification/Rule.py minification/Token.py minification/GLSLLexer130.py minification/Compressor.py ${SHADER_FILES}
+    BYPRODUCTS ${SHADER_HEADER}
+)
+
+set(FONT_HEADER font/font.h)
 add_custom_target(texture_packing
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/font/
     COMMAND "${Python3_EXECUTABLE}" pack.py
+    SOURCES font/pack.py ${STRINGS_FILE}
+    BYPRODUCTS ${FONT_HEADER}
 )
 
-add_custom_target(symbolization
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/gfx/
-    COMMAND "${Python3_EXECUTABLE}" symbolize.py voronoidesign.frag groundboxes.frag graffiti.frag bloodcells.frag -o symbols.h
+add_executable(${DEMO_IDENTIFIER}
+    ls.c
+    ${COMMON_HEADERS}
+    ${DEMO_HEADERS}
+    ${SFX_SHADER}
+    ${STRINGS_FILE}
+    ${FRAGMENT_SHADERS}
+    ${SHADER_FILES}
 )
 
-if(MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:demo /SUBSYSTEM:Windows  /OPT:REF  /OPT:ICF=10 /VERBOSE /NODEFAULTLIB")
-endif()
+add_dependencies(${DEMO_IDENTIFIER} minify_sfx)
+add_dependencies(${DEMO_IDENTIFIER} minify_shaders)
+add_dependencies(${DEMO_IDENTIFIER} texture_packing)
 
-add_executable(gross-gloss gg.c )
-add_dependencies(gross-gloss minification)
-add_dependencies(gross-gloss texture_packing)
-add_dependencies(gross-gloss symbolization)
+target_include_directories(${DEMO_IDENTIFIER} SYSTEM PRIVATE "${OPENGL_INCLUDE_DIR}")
 
-target_include_directories(gross-gloss SYSTEM PRIVATE "${OPENGL_INCLUDE_DIR}")
-
-target_link_libraries(gross-gloss OpenGL::GL)
+target_link_libraries(${DEMO_IDENTIFIER} OpenGL::GL)
 
 if(MSVC)
-    target_compile_options(gross-gloss PRIVATE /Gy /O1 /fp:fast /GR- /GS- /MT)
+    set_target_properties(${DEMO_IDENTIFIER} PROPERTIES LINK_FLAGS "/ENTRY:demo /SUBSYSTEM:Windows /OPT:REF /OPT:ICF=10 /VERBOSE /NODEFAULTLIB")
+    target_compile_options(${DEMO_IDENTIFIER} PRIVATE /Gy /O1 /fp:fast /GR- /GS- /MT )
 
     if (MSVC_VERSION GREATER_EQUAL 1910) # VS2017
-        target_link_libraries(gross-gloss Winmm.lib User32.lib ucrt.lib msvcrt.lib vcruntime.lib ucrt.lib)
+        target_link_libraries(${DEMO_IDENTIFIER} User32.lib Winmm.lib ucrt.lib msvcrt.lib vcruntime.lib Vfw32.lib)
     else()
         # for debug output: User32.lib ucrt.lib msvcrt.lib
-        target_link_libraries(gross-gloss User32.lib Winmm.lib ucrt.lib msvcrt.lib)
+        target_link_libraries(${DEMO_IDENTIFIER} User32.lib Winmm.lib ucrt.lib msvcrt.lib)
     endif()
 
-    find_program(KKRUNCHY_K7 kkrunchy_k7.exe HINTS "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")
-    add_custom_command(TARGET gross-gloss COMMAND "${KKRUNCHY_K7}" --best "$<TARGET_FILE:gross-gloss>" --out "$<TARGET_FILE_DIR:gross-gloss>/gross-glossc.exe" POST_BUILD)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 4 AND MINIFY_64K AND (MSVC_IDE OR CMAKE_BUILD_TYPE STREQUAL "Release"))
+        target_compile_definitions(${DEMO_IDENTIFIER} PRIVATE "$<$<CONFIG:RELEASE>:MINIFY_64K>")
+        find_program(KKRUNCHY_K7 kkrunchy_k7.exe HINTS "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/bin")
+        add_custom_command(TARGET ${DEMO_IDENTIFIER} COMMAND "$<$<CONFIG:RELEASE>:${KKRUNCHY_K7}>" ARGS --best "$<TARGET_FILE:${DEMO_IDENTIFIER}>" --out "$<TARGET_FILE_DIR:${DEMO_IDENTIFIER}>/${DEMO_IDENTIFIER}c.exe" POST_BUILD)
+    endif()
 else()
     find_package(SDL2 REQUIRED)
-    target_include_directories(gross-gloss SYSTEM PRIVATE ${SDL2_INCLUDE_DIRS})
-    target_link_libraries(gross-gloss ${SDL2_LIBRARIES})
+    target_include_directories(${DEMO_IDENTIFIER} SYSTEM PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(${DEMO_IDENTIFIER} ${SDL2_LIBRARIES})
+endif()
+
+
+#################################
+# Studio executable
+#################################
+
+add_executable(studio
+    studio/studio.cpp
+    studio/mainwindow.cpp
+    studio/mainwindow.ui
+    studio/demoapi.cpp
+    studio/renderviewwidget.cpp
+    
+    ${COMMON_HEADERS}
+    
+    studio/nanokontrol2.ui
+    studio/nanokontrol2Widget.cpp
+    
+    studio/apc40mk2widget.ui
+    studio/apc40mk2widget.cpp
+)
+
+add_dependencies(studio minify_sfx)
+add_dependencies(studio minify_shaders)
+add_dependencies(studio texture_packing)
+
+target_link_libraries(studio Qt5::Widgets)
+target_link_libraries(studio OpenGL::GL)
+
+if(WIN32)
+    target_link_libraries(studio Winmm.lib)
+
+    get_filename_component(_qt_bin_dir "${QT_QMAKE_EXECUTABLE}" DIRECTORY)
+    find_program(WINDEPLOYQT_EXECUTABLE NAMES windeployqt.exe HINTS "${_qt_bin_dir}")
+    message("Found windeployqt executable: ${WINDEPLOYQT_EXECUTABLE}")
+    message("Binary is in: $<TARGET_FILE_DIR:studio>")
+    add_custom_command(TARGET studio COMMAND ${WINDEPLOYQT_EXECUTABLE} "$<TARGET_FILE:studio>")
 endif()

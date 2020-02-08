@@ -5,7 +5,11 @@ build
 *__pycache__
 .vs
 /CMakeSettings.json
-/CMakeLists.txt.user
+/CMakeLists.txt.*
+bin
+
+# Generated headers
+/shaders.gen.h
 
 # Prerequisites
 *.d

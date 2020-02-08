@@ -239,7 +239,7 @@ float FQMimp4_volume(float _BEAT)
 uniform float iBlockOffset;
 uniform float iSampleRate;
 uniform float iVolume;
-uniform int iTexSize;
+uniform float iTexSize;
 uniform sampler2D iSequence;
 uniform float iSequenceWidth;
 

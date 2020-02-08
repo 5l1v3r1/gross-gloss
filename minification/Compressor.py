@@ -1,5 +1,5 @@
-# Tunguska by Team210 - 64k intro by Team210 at Solskogen 2k19
-# Copyright (C) 2018  Alexander Kraus <nr4@z10.info>
+# Hardcyber - PC-64k-Intro by Team210 at Deadline 2k19
+# Copyright (C) 2019  Alexander Kraus <nr4@z10.info>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,15 @@ def compress(source):
     newcode = ""
     lexer = GLSLLexer130.GLSLLexer130(source)
     token = lexer.token()
+    ids = []
+    define = False
     while token != None:
-        if (token.tokenName != "SINGLELINE_COMMENT") and (token.tokenName != "MULTILINE_COMMENT"):
+        if token.tokenName == "DEFINE_DIRECTIVE":
+            newcode += '\n'
+        if token.tokenName == "ENFORCED_CRLF":
+            newcode += '\n'
+        if token.tokenName == "IDENTIFIER" : ids += [token.tokenData]
+        if (token.tokenName != "SINGLELINE_COMMENT") and (token.tokenName != "MULTILINE_COMMENT") and (token.tokenName != "ENFORCED_CRLF"):
             newcode += token.tokenData
         if token.tokenName in [ "VOID", "FLOAT", "VEC2", "VEC3", "VEC4", "MAT2", "MAT3", "MAT4", "SAMPLER2D", "UNIFORM", "IN_QUALIFIER", "OUT_QUALIFIER", "INOUT_QUALIFIER", "VOID", "VERSION_DIRECTIVE", "DEFINE_DIRECTIVE", "CONST", "INT", "ELSE", "RETURN" ]:
             newcode += " "

@@ -243,7 +243,7 @@ const char * sfx_frag =
 "uniform float iBlockOffset;\n"
 "uniform float iSampleRate;\n"
 "uniform float iVolume;\n"
-"uniform int iTexSize;\n"
+"uniform float iTexSize;\n"
 "uniform sampler2D iSequence;\n"
 "uniform float iSequenceWidth;\n"
 "\n"
