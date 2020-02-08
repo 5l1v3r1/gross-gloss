@@ -717,7 +717,7 @@ const char *groundboxes_source = "/* Gross Gloss by Team210 - 64k intro by Team2
 "    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
 "}\n"
 "\0";
-const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
+const char *graffiti_source = "/* Lightcyber by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
 "* Copyright (C) 2019  Alexander Kraus <nr4@z10.info>\n"
 "*\n"
 "* This program is free software: you can redistribute it and/or modify\n"
@@ -984,6 +984,7 @@ const char *graffiti_source = "/* Gross Gloss by Team210 - 64k intro by Team210 
 "{\n"
 "    mainImage(gl_FragColor, gl_FragCoord.xy);\n"
 "}\n"
+"\n"
 "\0";
 const char *bloodcells_source = "/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19\n"
 "* Copyright (C) 2019  Alexander Kraus <nr4@z10.info>\n"

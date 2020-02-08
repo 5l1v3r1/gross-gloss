@@ -1,4 +1,4 @@
-/* Gross Gloss by Team210 - 64k intro by Team210 at Solskogen 2k19
+/* Lightcyber by Team210 - 64k intro by Team210 at Solskogen 2k19
 * Copyright (C) 2019  Alexander Kraus <nr4@z10.info>
 *
 * This program is free software: you can redistribute it and/or modify
@@ -265,3 +265,4 @@ void main()
 {
     mainImage(gl_FragColor, gl_FragCoord.xy);
 }
+

@@ -35,7 +35,9 @@ else()
         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py  -o "${PROJECT_SOURCE_DIR}/sfx.h" "${PROJECT_SOURCE_DIR}/sfx.frag" --no-minification
         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/load.h" "${PROJECT_SOURCE_DIR}/gfx/load.frag" --no-minification
         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/post.h" "${PROJECT_SOURCE_DIR}/gfx/post.frag" --no-minification
+        COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/ui.h" "${PROJECT_SOURCE_DIR}/gfx/ui.frag" --no-minification
         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/logo210.h" "${PROJECT_SOURCE_DIR}/gfx/logo210.frag" --no-minification
+        
 #         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/decayingfactory.h" "${PROJECT_SOURCE_DIR}/gfx/decayingfactory.frag" --no-minification
         COMMAND "${Python3_EXECUTABLE}" shader-compressor.py -o "${PROJECT_SOURCE_DIR}/gfx/text.h" "${PROJECT_SOURCE_DIR}/gfx/text.frag" --no-minification
     )
@@ -71,7 +73,7 @@ if(MSVC)
         target_link_libraries(gross-gloss Winmm.lib User32.lib ucrt.lib msvcrt.lib vcruntime.lib ucrt.lib)
     else()
         # for debug output: User32.lib ucrt.lib msvcrt.lib
-        target_link_libraries(gross-gloss Winmm.lib User32.lib ucrt.lib msvcrt.lib)
+        target_link_libraries(gross-gloss User32.lib Winmm.lib ucrt.lib msvcrt.lib)
     endif()
 
     find_program(KKRUNCHY_K7 kkrunchy_k7.exe HINTS "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")

@@ -12,6 +12,7 @@
 #	define WIN32_LEAN_AND_MEAN
 #	define VC_EXTRALEAN
 #	include <windows.h>
+#   include <Windowsx.h>
 #	include <commctrl.h>
 #	include <mmsystem.h>
 #	include <Mmreg.h>
@@ -110,49 +111,53 @@ void debugp(int program)
 int w = 1920, h = 1080;
 
 int
-// SFX
-sfx_program,
-sfx_handle,
-sfx_blockoffset_location,
-sfx_samplerate_location,
-sfx_volumelocation,
-sfx_texs_location,
-sfx_sequence_texture_location,
-sfx_sequence_width_location,
+    // SFX
+    sfx_program,
+    sfx_handle,
+    sfx_blockoffset_location,
+    sfx_samplerate_location,
+    sfx_volumelocation,
+    sfx_texs_location,
+    sfx_sequence_texture_location,
+    sfx_sequence_width_location,
 
-// Sequence
-sequence_texture_handle,
+    // Sequence
+    sequence_texture_handle,
 
-// Loading bar
-load_handle,
-load_program,
-load_resolution_location,
-load_time_location,
-load_progress_location,
+    // Loading bar
+    load_handle,
+    load_program,
+    load_resolution_location,
+    load_time_location,
+    load_progress_location,
 
-// Post processing
-post_handle,
-post_program,
-post_resolution_location,
-post_fsaa_location,
-post_channel0_location,
-post_time_location,
+    // Post processing
+    post_handle,
+    post_program,
+    post_resolution_location,
+    post_fsaa_location,
+    post_channel0_location,
+    post_time_location,
 
-// Antialiasing
-fsaa = 25,
-txaa = 1,
+    // Ui shader
+    ui_handle,
+    ui_program,
+    ui_time_location,
+    ui_maxtime_location,
+    ui_mouse_location,
+    ui_playing_location,
+    ui_resolution_location,
+    ui_channel0_location,
 
-// Logo
-logo210_time_location,
-logo210_resolution_location,
-logo210_program,
-logo210_handle,
+    // Antialiasing
+    fsaa = 25,
+    txaa = 1,
 
-// Decaying factory
-//     decayingfactory_time_location, 
-//     decayingfactory_resolution_location,
-//     decayingfactory_program, 
-//     decayingfactory_handle,
+    // Logo
+    logo210_time_location,
+    logo210_resolution_location,
+    logo210_program,
+    logo210_handle,
 
 	// Text
 	text_time_location,
@@ -163,6 +168,8 @@ logo210_handle,
 	font_texture_handle,
 	text_program,
 	text_handle;
+    
+double mx, my;
 
 // Demo globals
 #define duration 157.
@@ -216,10 +223,6 @@ void draw();
 
 #include "font/font.h"
 
-// #include "gfx/decayingfactory.h"
-// #define DECAYINGFACTORY_VAR_IRESOLUTION "iResolution"
-// #define DECAYINGFACTORY_VAR_ITIME "iTime"
-
 #include "gfx/load.h"
 #define LOAD_VAR_ITIME "iTime"
 #define LOAD_VAR_IPROGRESS "iProgress"
@@ -234,6 +237,14 @@ void draw();
 #define POST_VAR_IRESOLUTION "iResolution"
 #define POST_VAR_ICHANNEL0 "iChannel0"
 #define POST_VAR_ITIME "iTime"
+
+#include "gfx/ui.h"
+#define UI_VAR_ITIME "iTime"
+#define UI_VAR_IMAXTIME "iMaxTime"
+#define UI_VAR_IMOUSE "iMouse"
+#define UI_VAR_IPLAYING "iPlaying"
+#define UI_VAR_IRESOLUTION "iResolution"
+#define UI_VAR_ICHANNEL0 "iChannel0"
 
 #include "gfx/symbols.h"
 
